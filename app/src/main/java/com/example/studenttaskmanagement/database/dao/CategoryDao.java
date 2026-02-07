@@ -135,7 +135,7 @@ public class CategoryDao {
         int colorIndex = cursor.getColumnIndex(DatabaseContract.Categories.COLUMN_COLOR);
 
         if (idIndex >= 0 && !cursor.isNull(idIndex)) {
-            category.setId((int) cursor.getLong(idIndex));
+            category.setId(cursor.getLong(idIndex));
         }
 
         category.setName(nameIndex >= 0 && !cursor.isNull(nameIndex) ? cursor.getString(nameIndex) : null);
