@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.model.TaskStatus;
 
 /**
  * Shows details for a single task and provides simple actions
@@ -86,13 +87,13 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewTitle.setText(nonNullText(currentTask.getTitle()));
         textViewDescription.setText(nonNullText(currentTask.getDescription()));
         textViewDeadline.setText(nonNullText(currentTask.getDeadline()));
-        textViewStatus.setText(String.valueOf(currentTask.getStatus()));
+        textViewStatus.setText(currentTask.getStatus() == TaskStatus.COMPLETED
+                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
     }
 
     private void openEditTask() {
         // Keep navigation simple: hand off task ID to EditTaskActivity.
-        Intent intent = new Intent();
-        intent.setClassName(this, "com.example.studenttaskmanagement.activities.EditTaskActivity");
+        Intent intent = new Intent(this, EditTaskActivity.class);
         intent.putExtra(EXTRA_TASK_ID, taskId);
         startActivity(intent);
     }

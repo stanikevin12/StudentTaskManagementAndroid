@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.model.TaskStatus;
 
 /**
  * Activity responsible for collecting task details from the user
@@ -19,7 +20,7 @@ import com.example.studenttaskmanagement.model.Task;
  */
 public class AddTaskActivity extends AppCompatActivity {
 
-    private static final int DEFAULT_STATUS = 0;
+    private static final int DEFAULT_STATUS = TaskStatus.PENDING;
     private static final long DEFAULT_CATEGORY_ID = 1L;
     private static final long DEFAULT_PRIORITY_ID = 1L;
     private static final long DEFAULT_USER_ID = 1L;
@@ -74,7 +75,7 @@ public class AddTaskActivity extends AppCompatActivity {
         task.setUserId(DEFAULT_USER_ID);
 
         long insertedId = taskDao.insertTask(task);
-        if (insertedId > 0) {
+        if (insertedId != -1) {
             Toast.makeText(this, "Task saved", Toast.LENGTH_SHORT).show();
             finish();
         } else {
