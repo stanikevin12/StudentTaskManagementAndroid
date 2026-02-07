@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.activities.TaskDetailActivity;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.model.TaskStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         holder.textTitle.setText(task.getTitle() != null ? task.getTitle() : "Untitled Task");
         holder.textDeadline.setText(task.getDeadline() != null ? task.getDeadline() : "No deadline");
-        holder.textStatus.setText(task.getStatus() == 1 ? "Completed" : "Pending");
+        holder.textStatus.setText(task.getStatus() == TaskStatus.COMPLETED
+                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, TaskDetailActivity.class);
