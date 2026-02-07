@@ -1,16 +1,16 @@
 package com.example.studenttaskmanagement.model;
 
 public class StudySession {
-    private int id;
-    private int taskId;
-    private String startTime;
-    private String endTime;
-    private int duration;
+    private long id;
+    private long taskId;
+    private long startTime;
+    private long endTime;
+    private long duration;
 
     public StudySession() {
     }
 
-    public StudySession(int id, int taskId, String startTime, String endTime, int duration) {
+    public StudySession(long id, long taskId, long startTime, long endTime, long duration) {
         this.id = id;
         this.taskId = taskId;
         this.startTime = startTime;
@@ -18,43 +18,43 @@ public class StudySession {
         this.duration = duration;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getTaskId() {
+    public long getTaskId() {
         return taskId;
     }
 
-    public void setTaskId(int taskId) {
+    public void setTaskId(long taskId) {
         this.taskId = taskId;
     }
 
-    public String getStartTime() {
+    public long getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(long startTime) {
         this.startTime = startTime;
     }
 
-    public String getEndTime() {
+    public long getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(String endTime) {
+    public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
 
-    public int getDuration() {
+    public long getDuration() {
         return duration;
     }
 
-    public void setDuration(int duration) {
+    public void setDuration(long duration) {
         this.duration = duration;
     }
 }

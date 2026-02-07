@@ -1,22 +1,22 @@
 package com.example.studenttaskmanagement.model;
 
 public class Priority {
-    private int id;
+    private long id;
     private String label;
 
     public Priority() {
     }
 
-    public Priority(int id, String label) {
+    public Priority(long id, String label) {
         this.id = id;
         this.label = label;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

@@ -1,34 +1,34 @@
 package com.example.studenttaskmanagement.model;
 
 public class Attachment {
-    private int id;
-    private int taskId;
+    private long id;
+    private long taskId;
     private String filePath;
     private String type;
 
     public Attachment() {
     }
 
-    public Attachment(int id, int taskId, String filePath, String type) {
+    public Attachment(long id, long taskId, String filePath, String type) {
         this.id = id;
         this.taskId = taskId;
         this.filePath = filePath;
         this.type = type;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getTaskId() {
+    public long getTaskId() {
         return taskId;
     }
 
-    public void setTaskId(int taskId) {
+    public void setTaskId(long taskId) {
         this.taskId = taskId;
     }
 

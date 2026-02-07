@@ -35,7 +35,7 @@ public class StudySessionDao {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseContract.StudySessions.COLUMN_TASK_ID, taskId);
-        values.put(DatabaseContract.StudySessions.COLUMN_START_TIME, String.valueOf(startTime));
+        values.put(DatabaseContract.StudySessions.COLUMN_START_TIME, startTime);
         values.putNull(DatabaseContract.StudySessions.COLUMN_END_TIME);
         values.put(DatabaseContract.StudySessions.COLUMN_DURATION, 0L);
 
@@ -61,7 +61,7 @@ public class StudySessionDao {
         long duration = Math.max(0L, endTime - startTime);
 
         ContentValues values = new ContentValues();
-        values.put(DatabaseContract.StudySessions.COLUMN_END_TIME, String.valueOf(endTime));
+        values.put(DatabaseContract.StudySessions.COLUMN_END_TIME, endTime);
         values.put(DatabaseContract.StudySessions.COLUMN_DURATION, duration);
 
         return db.update(
@@ -130,16 +130,7 @@ public class StudySessionDao {
                 return null;
             }
 
-            String startTimeValue = cursor.getString(startTimeIndex);
-            if (startTimeValue == null || startTimeValue.trim().isEmpty()) {
-                return null;
-            }
-
-            try {
-                return Long.parseLong(startTimeValue);
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
+            return cursor.getLong(startTimeIndex);
         } finally {
             cursor.close();
         }
@@ -155,26 +146,24 @@ public class StudySessionDao {
         int durationIndex = cursor.getColumnIndex(DatabaseContract.StudySessions.COLUMN_DURATION);
 
         if (idIndex >= 0 && !cursor.isNull(idIndex)) {
-            session.setId((int) cursor.getLong(idIndex));
+            session.setId(cursor.getLong(idIndex));
         }
 
         if (taskIdIndex >= 0 && !cursor.isNull(taskIdIndex)) {
-            session.setTaskId((int) cursor.getLong(taskIdIndex));
+            session.setTaskId(cursor.getLong(taskIdIndex));
         }
 
         session.setStartTime(startTimeIndex >= 0 && !cursor.isNull(startTimeIndex)
-                ? cursor.getString(startTimeIndex)
-                : null);
+                ? cursor.getLong(startTimeIndex)
+                : 0L);
 
         session.setEndTime(endTimeIndex >= 0 && !cursor.isNull(endTimeIndex)
-                ? cursor.getString(endTimeIndex)
-                : null);
+                ? cursor.getLong(endTimeIndex)
+                : 0L);
 
-        if (durationIndex >= 0 && !cursor.isNull(durationIndex)) {
-            session.setDuration((int) cursor.getLong(durationIndex));
-        } else {
-            session.setDuration(0);
-        }
+        session.setDuration(durationIndex >= 0 && !cursor.isNull(durationIndex)
+                ? cursor.getLong(durationIndex)
+                : 0L);
 
         return session;
     }

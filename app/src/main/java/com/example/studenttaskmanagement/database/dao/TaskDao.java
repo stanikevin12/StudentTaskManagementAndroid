@@ -177,7 +177,7 @@ public class TaskDao {
         int userIdIndex = cursor.getColumnIndex(DatabaseContract.Tasks.COLUMN_USER_ID);
 
         if (idIndex >= 0 && !cursor.isNull(idIndex)) {
-            task.setId((int) cursor.getLong(idIndex));
+            task.setId(cursor.getLong(idIndex));
         }
 
         task.setTitle(titleIndex >= 0 && !cursor.isNull(titleIndex) ? cursor.getString(titleIndex) : null);
@@ -188,11 +188,11 @@ public class TaskDao {
 
         task.setStatus(statusIndex >= 0 && !cursor.isNull(statusIndex) ? cursor.getInt(statusIndex) : 0);
         task.setCategoryId(categoryIdIndex >= 0 && !cursor.isNull(categoryIdIndex)
-                ? cursor.getInt(categoryIdIndex) : 0);
+                ? cursor.getLong(categoryIdIndex) : 0L);
         task.setPriorityId(priorityIdIndex >= 0 && !cursor.isNull(priorityIdIndex)
-                ? cursor.getInt(priorityIdIndex) : 0);
+                ? cursor.getLong(priorityIdIndex) : 0L);
         task.setUserId(userIdIndex >= 0 && !cursor.isNull(userIdIndex)
-                ? cursor.getInt(userIdIndex) : 0);
+                ? cursor.getLong(userIdIndex) : 0L);
 
         return task;
     }

@@ -1,20 +1,20 @@
 package com.example.studenttaskmanagement.model;
 
 public class Task {
-    private int id;
+    private long id;
     private String title;
     private String description;
     private String deadline;
     private int status;
-    private int categoryId;
-    private int priorityId;
-    private int userId;
+    private long categoryId;
+    private long priorityId;
+    private long userId;
 
     public Task() {
     }
 
-    public Task(int id, String title, String description, String deadline, int status,
-                int categoryId, int priorityId, int userId) {
+    public Task(long id, String title, String description, String deadline, int status,
+                long categoryId, long priorityId, long userId) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -25,11 +25,11 @@ public class Task {
         this.userId = userId;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -65,27 +65,27 @@ public class Task {
         this.status = status;
     }
 
-    public int getCategoryId() {
+    public long getCategoryId() {
         return categoryId;
     }
 
-    public void setCategoryId(int categoryId) {
+    public void setCategoryId(long categoryId) {
         this.categoryId = categoryId;
     }
 
-    public int getPriorityId() {
+    public long getPriorityId() {
         return priorityId;
     }
 
-    public void setPriorityId(int priorityId) {
+    public void setPriorityId(long priorityId) {
         this.priorityId = priorityId;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 }

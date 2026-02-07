@@ -1,7 +1,7 @@
 package com.example.studenttaskmanagement.model;
 
 public class User {
-    private int id;
+    private long id;
     private String name;
     private String email;
     private String createdAt;
@@ -9,18 +9,18 @@ public class User {
     public User() {
     }
 
-    public User(int id, String name, String email, String createdAt) {
+    public User(long id, String name, String email, String createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.createdAt = createdAt;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
