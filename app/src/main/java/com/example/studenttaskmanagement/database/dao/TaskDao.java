@@ -106,7 +106,7 @@ public class TaskDao {
      */
     public int updateTask(Task task) {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        ContentValues values = toContentValues(task, true);
+        ContentValues values = toContentValues(task, false);
 
         return db.update(
                 DatabaseContract.Tasks.TABLE_NAME,
@@ -177,7 +177,7 @@ public class TaskDao {
         int userIdIndex = cursor.getColumnIndex(DatabaseContract.Tasks.COLUMN_USER_ID);
 
         if (idIndex >= 0 && !cursor.isNull(idIndex)) {
-            task.setId(cursor.getInt(idIndex));
+            task.setId((int) cursor.getLong(idIndex));
         }
 
         task.setTitle(titleIndex >= 0 && !cursor.isNull(titleIndex) ? cursor.getString(titleIndex) : null);
