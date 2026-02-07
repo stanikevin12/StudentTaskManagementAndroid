@@ -27,10 +27,6 @@ public class AddTaskActivity extends AppCompatActivity {
     private EditText editTextTitle;
     private EditText editTextDescription;
     private EditText editTextDeadline;
-    private EditText editTextStatus;
-    private EditText editTextCategoryId;
-    private EditText editTextPriorityId;
-    private EditText editTextUserId;
     private Button buttonSaveTask;
 
     private TaskDao taskDao;
@@ -50,10 +46,6 @@ public class AddTaskActivity extends AppCompatActivity {
         editTextTitle = findViewById(R.id.editTextTaskTitle);
         editTextDescription = findViewById(R.id.editTextTaskDescription);
         editTextDeadline = findViewById(R.id.editTextTaskDeadline);
-        editTextStatus = findViewById(R.id.editTextTaskStatus);
-        editTextCategoryId = findViewById(R.id.editTextTaskCategoryId);
-        editTextPriorityId = findViewById(R.id.editTextTaskPriorityId);
-        editTextUserId = findViewById(R.id.editTextTaskUserId);
         buttonSaveTask = findViewById(R.id.buttonSaveTask);
     }
 
@@ -72,34 +64,14 @@ public class AddTaskActivity extends AppCompatActivity {
             return;
         }
 
-        Integer status = parseOptionalInt(editTextStatus, "Status must be a whole number");
-        if (status == null && !TextUtils.isEmpty(getTrimmedText(editTextStatus))) {
-            return;
-        }
-
-        Long categoryId = parseOptionalLong(editTextCategoryId, "Category ID must be a whole number");
-        if (categoryId == null && !TextUtils.isEmpty(getTrimmedText(editTextCategoryId))) {
-            return;
-        }
-
-        Long priorityId = parseOptionalLong(editTextPriorityId, "Priority ID must be a whole number");
-        if (priorityId == null && !TextUtils.isEmpty(getTrimmedText(editTextPriorityId))) {
-            return;
-        }
-
-        Long userId = parseOptionalLong(editTextUserId, "User ID must be a whole number");
-        if (userId == null && !TextUtils.isEmpty(getTrimmedText(editTextUserId))) {
-            return;
-        }
-
         Task task = new Task();
         task.setTitle(title);
         task.setDescription(description);
         task.setDeadline(deadline);
-        task.setStatus(status != null ? status : DEFAULT_STATUS);
-        task.setCategoryId(categoryId != null ? categoryId : DEFAULT_CATEGORY_ID);
-        task.setPriorityId(priorityId != null ? priorityId : DEFAULT_PRIORITY_ID);
-        task.setUserId(userId != null ? userId : DEFAULT_USER_ID);
+        task.setStatus(DEFAULT_STATUS);
+        task.setCategoryId(DEFAULT_CATEGORY_ID);
+        task.setPriorityId(DEFAULT_PRIORITY_ID);
+        task.setUserId(DEFAULT_USER_ID);
 
         long insertedId = taskDao.insertTask(task);
         if (insertedId > 0) {
@@ -118,37 +90,5 @@ public class AddTaskActivity extends AppCompatActivity {
     private String getOptionalText(EditText editText) {
         String value = getTrimmedText(editText);
         return TextUtils.isEmpty(value) ? null : value;
-    }
-
-    @Nullable
-    private Integer parseOptionalInt(EditText editText, String errorMessage) {
-        String value = getTrimmedText(editText);
-        if (TextUtils.isEmpty(value)) {
-            return null;
-        }
-
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            editText.setError(errorMessage);
-            editText.requestFocus();
-            return null;
-        }
-    }
-
-    @Nullable
-    private Long parseOptionalLong(EditText editText, String errorMessage) {
-        String value = getTrimmedText(editText);
-        if (TextUtils.isEmpty(value)) {
-            return null;
-        }
-
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            editText.setError(errorMessage);
-            editText.requestFocus();
-            return null;
-        }
     }
 }
