@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Task Details"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewTaskTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="-"
+        android:textSize="18sp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewTaskDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="-"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Deadline"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewTaskDeadline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="-"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewTaskStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="-"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/buttonEditTask"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Edit Task" />
+
+    <Button
+        android:id="@+id/buttonDeleteTask"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Task"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/buttonStudySessions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Study Sessions"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
