@@ -1,4 +1,4 @@
-package com.example.studenttaskmanager
+package com.example.studenttaskmanagement
 
 import org.junit.Test
 
