@@ -2,8 +2,11 @@ package com.example.studenttaskmanagement.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setTitle("My Tasks");
+
         recyclerViewTasks = findViewById(R.id.recyclerViewTasks);
         fabAddTask = findViewById(R.id.fabAddTask);
 
@@ -56,10 +61,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupActions() {
-        fabAddTask.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
-            startActivity(intent);
-        });
+        fabAddTask.setOnClickListener(v -> openAddTask());
+    }
+
+    private void openAddTask() {
+        Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
+        startActivity(intent);
     }
 
     /**
@@ -68,5 +75,32 @@ public class MainActivity extends AppCompatActivity {
     private void loadTasks() {
         List<Task> tasks = taskDao.getAllTasks();
         taskAdapter.setTasks(tasks);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.menuAddTask) {
+            openAddTask();
+            return true;
+        } else if (itemId == R.id.menuAbout) {
+            showAboutDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showAboutDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Student Task Management")
+                .setMessage("A simple app to manage student tasks and study sessions.\n\nAuthor: Student")
+                .setPositiveButton("OK", null)
+                .show();
     }
 }
