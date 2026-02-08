@@ -23,21 +23,17 @@ public class CategoryDao {
         this.databaseHelper = new AppDatabaseHelper(context.getApplicationContext());
     }
 
-    /**
-     * Inserts a category row into the database.
-     *
-     * @param category category data to insert.
-     * @return row ID of inserted category, or -1 if insertion failed.
-     */
     public long insertCategory(Category category) {
+        if (category == null) return -1;
+
+        String name = category.getName();
+        if (name == null || name.trim().isEmpty()) {
+            return -1; // <-- prevent NOT NULL constraint crash
+        }
+
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-
-        if (category.getName() != null) {
-            values.put(DatabaseContract.Categories.COLUMN_NAME, category.getName());
-        } else {
-            values.putNull(DatabaseContract.Categories.COLUMN_NAME);
-        }
+        values.put(DatabaseContract.Categories.COLUMN_NAME, name.trim());
 
         if (category.getColor() != null) {
             values.put(DatabaseContract.Categories.COLUMN_COLOR, category.getColor());
@@ -48,12 +44,6 @@ public class CategoryDao {
         return db.insert(DatabaseContract.Categories.TABLE_NAME, null, values);
     }
 
-    /**
-     * Returns a category by its ID.
-     *
-     * @param id category primary key.
-     * @return Category when found, otherwise null.
-     */
     public Category getCategoryById(long id) {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
         Cursor cursor = db.query(
@@ -80,11 +70,6 @@ public class CategoryDao {
         return category;
     }
 
-    /**
-     * Returns all categories ordered by ID ascending.
-     *
-     * @return list of categories, empty if none exist.
-     */
     public List<Category> getAllCategories() {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
         List<Category> categories = new ArrayList<>();
@@ -112,12 +97,6 @@ public class CategoryDao {
         return categories;
     }
 
-    /**
-     * Deletes a category by ID.
-     *
-     * @param id category primary key.
-     * @return number of affected rows.
-     */
     public int deleteCategory(long id) {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         return db.delete(

@@ -15,6 +15,8 @@ import com.example.studenttaskmanagement.activities.TaskDetailActivity;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskStatus;
 
+import com.google.android.material.chip.Chip;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +52,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, TaskDetailActivity.class);
-            intent.putExtra("task_id", task.getId());
+            intent.putExtra(TaskDetailActivity.EXTRA_TASK_ID, task.getId()); // ✅ FIX
             context.startActivity(intent);
         });
     }
@@ -74,7 +76,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     static class TaskViewHolder extends RecyclerView.ViewHolder {
         final TextView textTitle;
         final TextView textDeadline;
-        final TextView textStatus;
+        final Chip textStatus;
 
         TaskViewHolder(@NonNull View itemView) {
             super(itemView);

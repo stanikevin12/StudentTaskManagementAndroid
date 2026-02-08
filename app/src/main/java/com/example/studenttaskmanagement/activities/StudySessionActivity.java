@@ -2,7 +2,7 @@ package com.example.studenttaskmanagement.activities;
 
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,21 +15,22 @@ import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.adapter.StudySessionAdapter;
 import com.example.studenttaskmanagement.database.dao.StudySessionDao;
 import com.example.studenttaskmanagement.model.StudySession;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Activity responsible for managing study sessions for a single task.
- * It starts/stops sessions via DAO, and displays session history + total study time.
- */
 public class StudySessionActivity extends AppCompatActivity {
 
-    private Button buttonStartSession;
-    private Button buttonStopSession;
+    private MaterialButton buttonStartSession;
+    private MaterialButton buttonStopSession;
     private TextView textViewTotalStudyTime;
     private RecyclerView recyclerViewStudySessions;
+
+    // Empty state views
+    private View layoutEmptyState;
+    private MaterialButton buttonStartFirstSession;
 
     private StudySessionDao studySessionDao;
     private StudySessionAdapter studySessionAdapter;
@@ -53,6 +54,7 @@ public class StudySessionActivity extends AppCompatActivity {
         readTaskId();
         setupRecyclerView();
         setupActions();
+
         refreshSessionData();
         updateButtonsState();
     }
@@ -62,6 +64,9 @@ public class StudySessionActivity extends AppCompatActivity {
         buttonStopSession = findViewById(R.id.buttonStopStudySession);
         textViewTotalStudyTime = findViewById(R.id.textViewTotalStudyTime);
         recyclerViewStudySessions = findViewById(R.id.recyclerViewStudySessions);
+
+        layoutEmptyState = findViewById(R.id.layoutEmptyState);
+        buttonStartFirstSession = findViewById(R.id.buttonStartFirstSession);
     }
 
     private void readTaskId() {
@@ -81,12 +86,13 @@ public class StudySessionActivity extends AppCompatActivity {
     private void setupActions() {
         buttonStartSession.setOnClickListener(v -> startSession());
         buttonStopSession.setOnClickListener(v -> stopSession());
+
+        // Empty state CTA
+        buttonStartFirstSession.setOnClickListener(v -> startSession());
     }
 
     private void startSession() {
-        if (taskId <= 0L) {
-            return;
-        }
+        if (taskId <= 0L) return;
 
         if (activeSessionId != -1L) {
             Toast.makeText(this, "A study session is already running", Toast.LENGTH_SHORT).show();
@@ -121,24 +127,26 @@ public class StudySessionActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Refreshes study session history and recomputes total study duration for this task.
-     */
     private void refreshSessionData() {
-        if (taskId <= 0L) {
-            return;
-        }
+        if (taskId <= 0L) return;
 
         List<StudySession> sessions = studySessionDao.getSessionsForTask(taskId);
         studySessionAdapter.setSessions(sessions);
 
+        // Empty state toggle
+        boolean isEmpty = (sessions == null || sessions.isEmpty());
+        layoutEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        recyclerViewStudySessions.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+
         long totalDurationMs = 0L;
         long runningSessionId = -1L;
 
-        for (StudySession session : sessions) {
-            totalDurationMs += Math.max(0L, session.getDuration());
-            if (session.getEndTime() <= 0L) {
-                runningSessionId = session.getId();
+        if (sessions != null) {
+            for (StudySession session : sessions) {
+                totalDurationMs += Math.max(0L, session.getDuration());
+                if (session.getEndTime() <= 0L) {
+                    runningSessionId = session.getId();
+                }
             }
         }
 
@@ -157,6 +165,9 @@ public class StudySessionActivity extends AppCompatActivity {
         boolean isSessionActive = activeSessionId != -1L;
         buttonStartSession.setEnabled(!isSessionActive);
         buttonStopSession.setEnabled(isSessionActive);
+
+        // If session is running, show it clearly
+        buttonStartSession.setText(isSessionActive ? "Session Running..." : "Start Session");
     }
 
     @Override

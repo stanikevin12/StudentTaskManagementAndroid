@@ -17,32 +17,32 @@
         android:padding="14dp">
 
         <TextView
-            android:id="@+id/textViewSessionStartTime"
+            android:id="@+id/textTaskTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start: -"
-            android:textSize="14sp"
-            android:textColor="#374151"/>
-
-        <TextView
-            android:id="@+id/textViewSessionEndTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="End: -"
-            android:textSize="14sp"
-            android:layout_marginTop="6dp"
-            android:textColor="#374151"/>
-
-        <TextView
-            android:id="@+id/textViewSessionDuration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Duration: 0 min"
+            android:text="Task Title"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginTop="10dp"
             android:textColor="#111827"/>
 
+        <TextView
+            android:id="@+id/textTaskDeadline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Deadline: 2026-12-31"
+            android:layout_marginTop="6dp"
+            android:textColor="#4B5563"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/textTaskStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PENDING"
+            android:layout_marginTop="10dp"
+            app:chipCornerRadius="14dp"
+            app:chipMinHeight="32dp"
+            app:chipBackgroundColor="#E0F2FE"
+            android:textColor="#075985"/>
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

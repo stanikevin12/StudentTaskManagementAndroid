@@ -14,6 +14,10 @@ import java.util.List;
 
 /**
  * Data Access Object for study session operations.
+ *
+ * Updated to match schema where:
+ * - start_time and end_time are INTEGER (epoch millis)
+ * - task_id has FK ON DELETE CASCADE (handled in schema)
  */
 public class StudySessionDao {
 
@@ -25,18 +29,23 @@ public class StudySessionDao {
 
     /**
      * Starts a study session for a task by inserting start time.
-     * End time and duration are initially null/zero until the session is closed.
+     * End time is NULL until the session is ended.
      *
-     * @param taskId task ID associated with the session.
+     * @param taskId    task ID associated with the session.
      * @param startTime session start time in epoch milliseconds.
      * @return row ID of the inserted session, or -1 if insertion failed.
      */
     public long startSession(long taskId, long startTime) {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
+
         ContentValues values = new ContentValues();
         values.put(DatabaseContract.StudySessions.COLUMN_TASK_ID, taskId);
+
+        // INTEGER columns (epoch millis)
         values.put(DatabaseContract.StudySessions.COLUMN_START_TIME, startTime);
         values.putNull(DatabaseContract.StudySessions.COLUMN_END_TIME);
+
+        // duration in millis (INTEGER)
         values.put(DatabaseContract.StudySessions.COLUMN_DURATION, 0L);
 
         return db.insert(DatabaseContract.StudySessions.TABLE_NAME, null, values);
@@ -47,7 +56,7 @@ public class StudySessionDao {
      * Duration is computed as (endTime - startTime) and bounded to be non-negative.
      *
      * @param sessionId study session ID.
-     * @param endTime session end time in epoch milliseconds.
+     * @param endTime   session end time in epoch milliseconds.
      * @return number of affected rows.
      */
     public int endSession(long sessionId, long endTime) {
@@ -73,7 +82,36 @@ public class StudySessionDao {
     }
 
     /**
-     * Returns all study sessions for a given task.
+     * Returns a single study session by its ID.
+     *
+     * @param sessionId session primary key.
+     * @return StudySession if found, otherwise null.
+     */
+    public StudySession getSessionById(long sessionId) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+        Cursor cursor = db.query(
+                DatabaseContract.StudySessions.TABLE_NAME,
+                null,
+                DatabaseContract.StudySessions._ID + " = ?",
+                new String[]{String.valueOf(sessionId)},
+                null,
+                null,
+                null
+        );
+
+        if (cursor == null) return null;
+
+        try {
+            if (!cursor.moveToFirst()) return null;
+            return mapCursorToStudySession(cursor);
+        } finally {
+            cursor.close();
+        }
+    }
+
+    /**
+     * Returns all study sessions for a given task, newest first.
      *
      * @param taskId task ID.
      * @return list of StudySession records, empty if none exist.
@@ -105,6 +143,19 @@ public class StudySessionDao {
         return sessions;
     }
 
+    /**
+     * Deletes all sessions for a given task.
+     * (Optional helper; with ON DELETE CASCADE, deleting the task also deletes sessions.)
+     */
+    public int deleteSessionsForTask(long taskId) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        return db.delete(
+                DatabaseContract.StudySessions.TABLE_NAME,
+                DatabaseContract.StudySessions.COLUMN_TASK_ID + " = ?",
+                new String[]{String.valueOf(taskId)}
+        );
+    }
+
     private Long getSessionStartTime(SQLiteDatabase db, long sessionId) {
         Cursor cursor = db.query(
                 DatabaseContract.StudySessions.TABLE_NAME,
@@ -116,20 +167,15 @@ public class StudySessionDao {
                 null
         );
 
-        if (cursor == null) {
-            return null;
-        }
+        if (cursor == null) return null;
 
         try {
-            if (!cursor.moveToFirst()) {
-                return null;
-            }
+            if (!cursor.moveToFirst()) return null;
 
             int startTimeIndex = cursor.getColumnIndex(DatabaseContract.StudySessions.COLUMN_START_TIME);
-            if (startTimeIndex < 0 || cursor.isNull(startTimeIndex)) {
-                return null;
-            }
+            if (startTimeIndex < 0 || cursor.isNull(startTimeIndex)) return null;
 
+            // INTEGER epoch millis
             return cursor.getLong(startTimeIndex);
         } finally {
             cursor.close();
@@ -145,25 +191,15 @@ public class StudySessionDao {
         int endTimeIndex = cursor.getColumnIndex(DatabaseContract.StudySessions.COLUMN_END_TIME);
         int durationIndex = cursor.getColumnIndex(DatabaseContract.StudySessions.COLUMN_DURATION);
 
-        if (idIndex >= 0 && !cursor.isNull(idIndex)) {
-            session.setId(cursor.getLong(idIndex));
-        }
+        if (idIndex >= 0 && !cursor.isNull(idIndex)) session.setId(cursor.getLong(idIndex));
+        if (taskIdIndex >= 0 && !cursor.isNull(taskIdIndex)) session.setTaskId(cursor.getLong(taskIdIndex));
 
-        if (taskIdIndex >= 0 && !cursor.isNull(taskIdIndex)) {
-            session.setTaskId(cursor.getLong(taskIdIndex));
-        }
+        session.setStartTime(startTimeIndex >= 0 && !cursor.isNull(startTimeIndex) ? cursor.getLong(startTimeIndex) : 0L);
 
-        session.setStartTime(startTimeIndex >= 0 && !cursor.isNull(startTimeIndex)
-                ? cursor.getLong(startTimeIndex)
-                : 0L);
+        // If end_time is NULL (session still running), keep 0L
+        session.setEndTime(endTimeIndex >= 0 && !cursor.isNull(endTimeIndex) ? cursor.getLong(endTimeIndex) : 0L);
 
-        session.setEndTime(endTimeIndex >= 0 && !cursor.isNull(endTimeIndex)
-                ? cursor.getLong(endTimeIndex)
-                : 0L);
-
-        session.setDuration(durationIndex >= 0 && !cursor.isNull(durationIndex)
-                ? cursor.getLong(durationIndex)
-                : 0L);
+        session.setDuration(durationIndex >= 0 && !cursor.isNull(durationIndex) ? cursor.getLong(durationIndex) : 0L);
 
         return session;
     }

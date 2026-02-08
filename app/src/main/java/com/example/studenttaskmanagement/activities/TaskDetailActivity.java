@@ -5,9 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -17,10 +16,14 @@ import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskStatus;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.textview.MaterialTextView;
 
 /**
  * Shows details for a single task and provides simple actions
- * to edit, delete, or view study sessions for that task.
+ * to edit, delete, share, or view study sessions for that task.
  */
 public class TaskDetailActivity extends AppCompatActivity {
 
@@ -32,10 +35,11 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView textViewTitle;
     private TextView textViewDescription;
     private TextView textViewDeadline;
-    private TextView textViewStatus;
-    private Button buttonEditTask;
-    private Button buttonDeleteTask;
-    private Button buttonStudySessions;
+    private Chip chipStatus;
+
+    private MaterialButton buttonEditTask;
+    private MaterialButton buttonDeleteTask;
+    private MaterialButton buttonStudySessions;
 
     private TaskDao taskDao;
     private long taskId = -1L;
@@ -46,13 +50,15 @@ public class TaskDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
-        setTitle("Task Details");
-
-        taskDao = new TaskDao(this);
-
+        // Toolbar
+        MaterialToolbar toolbar = findViewById(R.id.toolbarTaskDetail);
+        setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Task Details");
         }
+
+        taskDao = new TaskDao(this);
 
         bindViews();
         readTaskId();
@@ -65,7 +71,10 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewTitle = findViewById(R.id.textViewTaskTitle);
         textViewDescription = findViewById(R.id.textViewTaskDescription);
         textViewDeadline = findViewById(R.id.textViewTaskDeadline);
-        textViewStatus = findViewById(R.id.textViewTaskStatus);
+
+        // NOTE: In XML this "status" view is a Chip, but we kept the same ID for compatibility.
+        chipStatus = findViewById(R.id.textViewTaskStatus);
+
         buttonEditTask = findViewById(R.id.buttonEditTask);
         buttonDeleteTask = findViewById(R.id.buttonDeleteTask);
         buttonStudySessions = findViewById(R.id.buttonStudySessions);
@@ -81,10 +90,10 @@ public class TaskDetailActivity extends AppCompatActivity {
 
     private void readAndPersistLastOpenedTask() {
         SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        // Read previous value so app state continuity is maintained between task opens.
+        // Read previous value (kept for continuity / future use)
         long previousTaskId = preferences.getLong(KEY_LAST_OPENED_TASK_ID, -1L);
         if (previousTaskId == taskId) {
-            // No-op; keeps the read meaningful while preserving current behavior.
+            // no-op
         }
         if (taskId > 0L) {
             preferences.edit().putLong(KEY_LAST_OPENED_TASK_ID, taskId).apply();
@@ -97,13 +106,8 @@ public class TaskDetailActivity extends AppCompatActivity {
         buttonStudySessions.setOnClickListener(v -> openStudySessions());
     }
 
-    /**
-     * Loads task details via DAO and renders them in the UI.
-     */
     private void loadTask() {
-        if (taskId <= 0L) {
-            return;
-        }
+        if (taskId <= 0L) return;
 
         currentTask = taskDao.getTaskById(taskId);
         if (currentTask == null) {
@@ -115,8 +119,15 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewTitle.setText(nonNullText(currentTask.getTitle()));
         textViewDescription.setText(nonNullText(currentTask.getDescription()));
         textViewDeadline.setText(nonNullText(currentTask.getDeadline()));
-        textViewStatus.setText(currentTask.getStatus() == TaskStatus.COMPLETED
-                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
+
+        boolean completed = currentTask.getStatus() == TaskStatus.COMPLETED;
+        chipStatus.setText(completed ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
+
+        // Small visual cue (safe + minimal)
+        if (completed) {
+            chipStatus.setChipBackgroundColorResource(android.R.color.holo_green_light);
+            chipStatus.setTextColor(getResources().getColor(android.R.color.black));
+        }
     }
 
     private void openEditTask() {
@@ -140,7 +151,10 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         String shareText = "Task: " + nonNullText(currentTask.getTitle())
-                + "\nDescription: " + nonNullText(currentTask.getDescription());
+                + "\nDescription: " + nonNullText(currentTask.getDescription())
+                + "\nDeadline: " + nonNullText(currentTask.getDeadline())
+                + "\nStatus: " + (currentTask.getStatus() == TaskStatus.COMPLETED
+                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
 
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
@@ -157,9 +171,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Deletes the current task and closes this screen to return to the list.
-     */
     private void deleteTask() {
         int deletedRows = taskDao.deleteTask(taskId);
         if (deletedRows > 0) {
@@ -198,6 +209,6 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private String nonNullText(@Nullable String value) {
-        return value == null ? "" : value;
+        return value == null ? "-" : value;
     }
 }

@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "student_task_management.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2; // <-- bumped from 1 to 2
 
     public AppDatabaseHelper(@NonNull Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -41,7 +41,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop child/dependent tables first, then parent/reference tables.
+        // Since we're changing schema, easiest is recreate for now:
         db.execSQL("DROP TABLE IF EXISTS " + DatabaseContract.Notifications.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + DatabaseContract.Attachments.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + DatabaseContract.StudySessions.TABLE_NAME);
@@ -58,7 +58,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                 + DatabaseContract.Users._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DatabaseContract.Users.COLUMN_NAME + " TEXT, "
                 + DatabaseContract.Users.COLUMN_EMAIL + " TEXT, "
-                + DatabaseContract.Users.COLUMN_CREATED_AT + " TEXT"
+                + DatabaseContract.Users.COLUMN_CREATED_AT + " INTEGER" // <-- was TEXT
                 + ")";
     }
 
@@ -100,11 +100,11 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         return "CREATE TABLE IF NOT EXISTS " + DatabaseContract.StudySessions.TABLE_NAME + " ("
                 + DatabaseContract.StudySessions._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DatabaseContract.StudySessions.COLUMN_TASK_ID + " INTEGER, "
-                + DatabaseContract.StudySessions.COLUMN_START_TIME + " TEXT, "
-                + DatabaseContract.StudySessions.COLUMN_END_TIME + " TEXT, "
+                + DatabaseContract.StudySessions.COLUMN_START_TIME + " INTEGER, " // <-- was TEXT
+                + DatabaseContract.StudySessions.COLUMN_END_TIME + " INTEGER, "   // <-- was TEXT
                 + DatabaseContract.StudySessions.COLUMN_DURATION + " INTEGER, "
                 + "FOREIGN KEY(" + DatabaseContract.StudySessions.COLUMN_TASK_ID + ") REFERENCES "
-                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ")"
+                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ") ON DELETE CASCADE"
                 + ")";
     }
 
@@ -115,7 +115,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                 + DatabaseContract.Attachments.COLUMN_FILE_PATH + " TEXT, "
                 + DatabaseContract.Attachments.COLUMN_TYPE + " TEXT, "
                 + "FOREIGN KEY(" + DatabaseContract.Attachments.COLUMN_TASK_ID + ") REFERENCES "
-                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ")"
+                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ") ON DELETE CASCADE"
                 + ")";
     }
 
@@ -126,7 +126,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
                 + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " TEXT, "
                 + DatabaseContract.Notifications.COLUMN_IS_SENT + " INTEGER DEFAULT 0, "
                 + "FOREIGN KEY(" + DatabaseContract.Notifications.COLUMN_TASK_ID + ") REFERENCES "
-                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ")"
+                + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ") ON DELETE CASCADE"
                 + ")";
     }
 
@@ -141,13 +141,8 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         values.put(DatabaseContract.Users._ID, 1);
         values.put(DatabaseContract.Users.COLUMN_NAME, "Default Student");
         values.put(DatabaseContract.Users.COLUMN_EMAIL, "student@example.com");
-        values.put(DatabaseContract.Users.COLUMN_CREATED_AT, String.valueOf(System.currentTimeMillis()));
-        db.insertWithOnConflict(
-                DatabaseContract.Users.TABLE_NAME,
-                null,
-                values,
-                SQLiteDatabase.CONFLICT_IGNORE
-        );
+        values.put(DatabaseContract.Users.COLUMN_CREATED_AT, System.currentTimeMillis()); // <-- still long, now INTEGER
+        db.insertWithOnConflict(DatabaseContract.Users.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     private void seedPriorities(SQLiteDatabase db) {
@@ -160,12 +155,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(DatabaseContract.Priorities._ID, id);
         values.put(DatabaseContract.Priorities.COLUMN_LABEL, label);
-        db.insertWithOnConflict(
-                DatabaseContract.Priorities.TABLE_NAME,
-                null,
-                values,
-                SQLiteDatabase.CONFLICT_IGNORE
-        );
+        db.insertWithOnConflict(DatabaseContract.Priorities.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     private void seedCategories(SQLiteDatabase db) {
@@ -178,11 +168,6 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(DatabaseContract.Categories.COLUMN_NAME, name);
         values.put(DatabaseContract.Categories.COLUMN_COLOR, color);
-        db.insertWithOnConflict(
-                DatabaseContract.Categories.TABLE_NAME,
-                null,
-                values,
-                SQLiteDatabase.CONFLICT_IGNORE
-        );
+        db.insertWithOnConflict(DatabaseContract.Categories.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 }
