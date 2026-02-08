@@ -10,12 +10,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.model.StudySession;
+import com.example.studenttaskmanagement.utils.DurationUtils;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * RecyclerView adapter for displaying study session history.
@@ -45,7 +45,7 @@ public class StudySessionAdapter extends RecyclerView.Adapter<StudySessionAdapte
         holder.textViewEndTime.setText(session.getEndTime() > 0
                 ? formatDateTime(session.getEndTime())
                 : "In progress");
-        holder.textViewDuration.setText(formatDurationMinutes(session.getDuration()));
+        holder.textViewDuration.setText(DurationUtils.formatMinutes(session.getDuration()));
     }
 
     @Override
@@ -66,11 +66,6 @@ public class StudySessionAdapter extends RecyclerView.Adapter<StudySessionAdapte
             return "-";
         }
         return DateFormat.getDateTimeInstance().format(new Date(timeMillis));
-    }
-
-    private String formatDurationMinutes(long durationMillis) {
-        long minutes = Math.max(0L, durationMillis / 60000L);
-        return String.format(Locale.getDefault(), "%d min", minutes);
     }
 
     static class StudySessionViewHolder extends RecyclerView.ViewHolder {

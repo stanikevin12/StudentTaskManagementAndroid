@@ -17,7 +17,7 @@ import com.example.studenttaskmanagement.model.TaskStatus;
 
 /**
  * Shows details for a single task and provides simple actions
- * to edit or delete that task.
+ * to edit, delete, or view study sessions for that task.
  */
 public class TaskDetailActivity extends AppCompatActivity {
 
@@ -29,6 +29,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView textViewStatus;
     private Button buttonEditTask;
     private Button buttonDeleteTask;
+    private Button buttonStudySessions;
 
     private TaskDao taskDao;
     private long taskId = -1L;
@@ -54,6 +55,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewStatus = findViewById(R.id.textViewTaskStatus);
         buttonEditTask = findViewById(R.id.buttonEditTask);
         buttonDeleteTask = findViewById(R.id.buttonDeleteTask);
+        buttonStudySessions = findViewById(R.id.buttonStudySessions);
     }
 
     private void readTaskId() {
@@ -67,6 +69,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private void setupActions() {
         buttonEditTask.setOnClickListener(v -> openEditTask());
         buttonDeleteTask.setOnClickListener(v -> showDeleteConfirmation());
+        buttonStudySessions.setOnClickListener(v -> openStudySessions());
     }
 
     /**
@@ -92,8 +95,13 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private void openEditTask() {
-        // Keep navigation simple: hand off task ID to EditTaskActivity.
         Intent intent = new Intent(this, EditTaskActivity.class);
+        intent.putExtra(EXTRA_TASK_ID, taskId);
+        startActivity(intent);
+    }
+
+    private void openStudySessions() {
+        Intent intent = new Intent(this, StudySessionActivity.class);
         intent.putExtra(EXTRA_TASK_ID, taskId);
         startActivity(intent);
     }
