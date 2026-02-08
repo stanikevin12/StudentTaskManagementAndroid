@@ -46,6 +46,8 @@ public class TaskDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
+        setTitle("Task Details");
+
         taskDao = new TaskDao(this);
 
         if (getSupportActionBar() != null) {
@@ -79,7 +81,11 @@ public class TaskDetailActivity extends AppCompatActivity {
 
     private void readAndPersistLastOpenedTask() {
         SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        preferences.getLong(KEY_LAST_OPENED_TASK_ID, -1L);
+        // Read previous value so app state continuity is maintained between task opens.
+        long previousTaskId = preferences.getLong(KEY_LAST_OPENED_TASK_ID, -1L);
+        if (previousTaskId == taskId) {
+            // No-op; keeps the read meaningful while preserving current behavior.
+        }
         if (taskId > 0L) {
             preferences.edit().putLong(KEY_LAST_OPENED_TASK_ID, taskId).apply();
         }

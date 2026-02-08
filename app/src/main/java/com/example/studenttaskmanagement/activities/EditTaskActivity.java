@@ -2,6 +2,7 @@ package com.example.studenttaskmanagement.activities;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -36,6 +37,11 @@ public class EditTaskActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_task);
+
+        setTitle("Edit Task");
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         taskDao = new TaskDao(this);
 
@@ -129,6 +135,15 @@ public class EditTaskActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Unable to update task", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private String getTrimmedText(EditText editText) {
