@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menuEditTask"
+        android:title="Edit Task"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/menuDeleteTask"
+        android:title="Delete Task"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/menuShareTask"
+        android:title="Share Task"
+        android:showAsAction="never" />
+
+</menu>

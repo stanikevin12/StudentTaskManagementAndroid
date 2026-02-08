@@ -1,7 +1,10 @@
 package com.example.studenttaskmanagement.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,6 +26,9 @@ public class TaskDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_TASK_ID = "extra_task_id";
 
+    private static final String PREFS_NAME = "student_task_prefs";
+    private static final String KEY_LAST_OPENED_TASK_ID = "last_opened_task_id";
+
     private TextView textViewTitle;
     private TextView textViewDescription;
     private TextView textViewDeadline;
@@ -42,8 +48,13 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         taskDao = new TaskDao(this);
 
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         bindViews();
         readTaskId();
+        readAndPersistLastOpenedTask();
         setupActions();
         loadTask();
     }
@@ -63,6 +74,14 @@ public class TaskDetailActivity extends AppCompatActivity {
         if (taskId <= 0L) {
             Toast.makeText(this, "Invalid task", Toast.LENGTH_SHORT).show();
             finish();
+        }
+    }
+
+    private void readAndPersistLastOpenedTask() {
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        preferences.getLong(KEY_LAST_OPENED_TASK_ID, -1L);
+        if (taskId > 0L) {
+            preferences.edit().putLong(KEY_LAST_OPENED_TASK_ID, taskId).apply();
         }
     }
 
@@ -98,12 +117,29 @@ public class TaskDetailActivity extends AppCompatActivity {
         Intent intent = new Intent(this, EditTaskActivity.class);
         intent.putExtra(EXTRA_TASK_ID, taskId);
         startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.fade_out);
     }
 
     private void openStudySessions() {
         Intent intent = new Intent(this, StudySessionActivity.class);
         intent.putExtra(EXTRA_TASK_ID, taskId);
         startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.fade_out);
+    }
+
+    private void shareTask() {
+        if (currentTask == null) {
+            Toast.makeText(this, "Task not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String shareText = "Task: " + nonNullText(currentTask.getTitle())
+                + "\nDescription: " + nonNullText(currentTask.getDescription());
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(shareIntent, "Share Task"));
     }
 
     private void showDeleteConfirmation() {
@@ -126,6 +162,33 @@ public class TaskDetailActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Unable to delete task", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_task_detail, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (itemId == R.id.menuEditTask) {
+            openEditTask();
+            return true;
+        } else if (itemId == R.id.menuDeleteTask) {
+            showDeleteConfirmation();
+            return true;
+        } else if (itemId == R.id.menuShareTask) {
+            shareTask();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private String nonNullText(@Nullable String value) {
