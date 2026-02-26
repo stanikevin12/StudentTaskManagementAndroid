@@ -15,6 +15,10 @@
 
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorOnSecondary">@android:color/black</item>
+
+        <!-- Keep launch window and first activity frame visually consistent -->
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
 
 </resources>
