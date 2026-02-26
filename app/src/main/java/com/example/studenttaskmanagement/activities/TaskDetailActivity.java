@@ -120,12 +120,15 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewDescription.setText(nonNullText(currentTask.getDescription()));
         textViewDeadline.setText(nonNullText(currentTask.getDeadline()));
 
-        boolean completed = currentTask.getStatus() == TaskStatus.COMPLETED;
-        chipStatus.setText(completed ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
+        int status = currentTask.getStatus();
+        chipStatus.setText(TaskStatus.getLabel(status));
 
         // Small visual cue (safe + minimal)
-        if (completed) {
+        if (status == TaskStatus.COMPLETED) {
             chipStatus.setChipBackgroundColorResource(android.R.color.holo_green_light);
+            chipStatus.setTextColor(getResources().getColor(android.R.color.black));
+        } else if (status == TaskStatus.NOT_DONE) {
+            chipStatus.setChipBackgroundColorResource(android.R.color.holo_red_light);
             chipStatus.setTextColor(getResources().getColor(android.R.color.black));
         }
     }
@@ -153,8 +156,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         String shareText = "Task: " + nonNullText(currentTask.getTitle())
                 + "\nDescription: " + nonNullText(currentTask.getDescription())
                 + "\nDeadline: " + nonNullText(currentTask.getDeadline())
-                + "\nStatus: " + (currentTask.getStatus() == TaskStatus.COMPLETED
-                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
+                + "\nStatus: " + TaskStatus.getLabel(currentTask.getStatus());
 
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");

@@ -1,5 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Splash theme (Day) -->
+    <style name="Theme.StudentTaskManagement.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.StudentTaskManagement</item>
+    </style>
+
     <style name="Theme.StudentTaskManagement" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize if you want -->
         <item name="colorPrimary">@color/purple_500</item>
@@ -8,6 +15,10 @@
 
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorOnSecondary">@android:color/black</item>
+
+        <!-- Keep launch window and first activity frame visually consistent -->
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
 
 </resources>

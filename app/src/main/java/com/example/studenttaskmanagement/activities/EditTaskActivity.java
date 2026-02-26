@@ -82,7 +82,7 @@ public class EditTaskActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
-                new String[]{TaskStatus.LABEL_PENDING, TaskStatus.LABEL_COMPLETED}
+                TaskStatus.LABELS
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
@@ -189,7 +189,7 @@ public class EditTaskActivity extends AppCompatActivity {
             editTextDeadline.setText("");
         }
 
-        spinnerStatus.setSelection(currentTask.getStatus() == TaskStatus.COMPLETED ? 1 : 0);
+        spinnerStatus.setSelection(getStatusIndex(currentTask.getStatus()));
     }
 
     private void updateTask() {
@@ -215,8 +215,7 @@ public class EditTaskActivity extends AppCompatActivity {
         currentTask.setTitle(title);
         currentTask.setDescription(description);
         currentTask.setDeadline(deadline);
-        currentTask.setStatus(spinnerStatus.getSelectedItemPosition() == 1
-                ? TaskStatus.COMPLETED : TaskStatus.PENDING);
+        currentTask.setStatus(getStatusValue(spinnerStatus.getSelectedItemPosition()));
 
         int updatedRows = taskDao.updateTask(currentTask);
         if (updatedRows > 0) {
@@ -226,6 +225,19 @@ public class EditTaskActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Unable to update task", Toast.LENGTH_SHORT).show();
         }
+    }
+
+
+    private int getStatusIndex(int status) {
+        if (status == TaskStatus.COMPLETED) return 1;
+        if (status == TaskStatus.NOT_DONE) return 2;
+        return 0;
+    }
+
+    private int getStatusValue(int position) {
+        if (position == 1) return TaskStatus.COMPLETED;
+        if (position == 2) return TaskStatus.NOT_DONE;
+        return TaskStatus.PENDING;
     }
 
     private void hideKeyboard() {
