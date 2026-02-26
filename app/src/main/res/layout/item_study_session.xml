@@ -43,6 +43,18 @@
             android:layout_marginTop="10dp"
             android:textColor="#111827"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonDeleteSession"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Delete"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconGravity="textStart"
+            app:strokeColor="#FCA5A5"
+            android:textColor="#991B1B"/>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

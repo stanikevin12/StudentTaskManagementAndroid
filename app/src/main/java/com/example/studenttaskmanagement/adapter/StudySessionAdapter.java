@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.model.StudySession;
 import com.example.studenttaskmanagement.utils.DurationUtils;
+import com.google.android.material.button.MaterialButton;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -23,10 +24,19 @@ import java.util.List;
  */
 public class StudySessionAdapter extends RecyclerView.Adapter<StudySessionAdapter.StudySessionViewHolder> {
 
+    public interface OnDeleteSessionClickListener {
+        void onDeleteSessionClicked(@NonNull StudySession session);
+    }
+
     private final List<StudySession> sessions;
+    private OnDeleteSessionClickListener onDeleteSessionClickListener;
 
     public StudySessionAdapter(List<StudySession> sessions) {
         this.sessions = sessions != null ? sessions : new ArrayList<>();
+    }
+
+    public void setOnDeleteSessionClickListener(@NonNull OnDeleteSessionClickListener listener) {
+        this.onDeleteSessionClickListener = listener;
     }
 
     @NonNull
@@ -46,6 +56,12 @@ public class StudySessionAdapter extends RecyclerView.Adapter<StudySessionAdapte
                 ? formatDateTime(session.getEndTime())
                 : "In progress");
         holder.textViewDuration.setText(DurationUtils.formatMinutes(session.getDuration()));
+
+        holder.buttonDeleteSession.setOnClickListener(v -> {
+            if (onDeleteSessionClickListener != null) {
+                onDeleteSessionClickListener.onDeleteSessionClicked(session);
+            }
+        });
     }
 
     @Override
@@ -72,12 +88,14 @@ public class StudySessionAdapter extends RecyclerView.Adapter<StudySessionAdapte
         final TextView textViewStartTime;
         final TextView textViewEndTime;
         final TextView textViewDuration;
+        final MaterialButton buttonDeleteSession;
 
         StudySessionViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewStartTime = itemView.findViewById(R.id.textViewSessionStartTime);
             textViewEndTime = itemView.findViewById(R.id.textViewSessionEndTime);
             textViewDuration = itemView.findViewById(R.id.textViewSessionDuration);
+            buttonDeleteSession = itemView.findViewById(R.id.buttonDeleteSession);
         }
     }
 }

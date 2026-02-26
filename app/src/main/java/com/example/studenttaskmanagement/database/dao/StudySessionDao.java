@@ -173,6 +173,18 @@ public class StudySessionDao {
     }
 
     /**
+     * Deletes a single study session by ID.
+     */
+    public int deleteSessionById(long sessionId) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        return db.delete(
+                DatabaseContract.StudySessions.TABLE_NAME,
+                DatabaseContract.StudySessions._ID + " = ?",
+                new String[]{String.valueOf(sessionId)}
+        );
+    }
+
+    /**
      * Deletes all sessions for a given task.
      * (Optional helper; with ON DELETE CASCADE, deleting the task also deletes sessions.)
      */
