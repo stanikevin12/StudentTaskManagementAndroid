@@ -25,6 +25,7 @@ public class StudySessionActivity extends AppCompatActivity {
 
     private MaterialButton buttonStartSession;
     private MaterialButton buttonStopSession;
+    private MaterialButton buttonBack;
     private TextView textViewTotalStudyTime;
     private RecyclerView recyclerViewStudySessions;
 
@@ -62,6 +63,7 @@ public class StudySessionActivity extends AppCompatActivity {
     private void bindViews() {
         buttonStartSession = findViewById(R.id.buttonStartStudySession);
         buttonStopSession = findViewById(R.id.buttonStopStudySession);
+        buttonBack = findViewById(R.id.buttonBack);
         textViewTotalStudyTime = findViewById(R.id.textViewTotalStudyTime);
         recyclerViewStudySessions = findViewById(R.id.recyclerViewStudySessions);
 
@@ -86,6 +88,7 @@ public class StudySessionActivity extends AppCompatActivity {
     private void setupActions() {
         buttonStartSession.setOnClickListener(v -> startSession());
         buttonStopSession.setOnClickListener(v -> stopSession());
+        buttonBack.setOnClickListener(v -> finish());
 
         // Empty state CTA
         buttonStartFirstSession.setOnClickListener(v -> startSession());
