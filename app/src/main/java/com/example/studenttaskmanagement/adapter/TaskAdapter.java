@@ -47,8 +47,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         holder.textTitle.setText(task.getTitle() != null ? task.getTitle() : "Untitled Task");
         holder.textDeadline.setText(task.getDeadline() != null ? task.getDeadline() : "No deadline");
-        holder.textStatus.setText(task.getStatus() == TaskStatus.COMPLETED
-                ? TaskStatus.LABEL_COMPLETED : TaskStatus.LABEL_PENDING);
+        holder.textStatus.setText(TaskStatus.getLabel(task.getStatus()));
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, TaskDetailActivity.class);
