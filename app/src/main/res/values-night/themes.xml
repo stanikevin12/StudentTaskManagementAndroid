@@ -3,7 +3,7 @@
 
     <!-- Splash theme (Night) -->
     <style name="Theme.StudentTaskManagement.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/black</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.StudentTaskManagement</item>
     </style>
@@ -18,7 +18,7 @@
         <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@android:color/black</item>
 
-        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
 
