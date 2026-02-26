@@ -143,6 +143,47 @@ public class StudySessionDao {
         return sessions;
     }
 
+
+    /**
+     * Returns how many completed study sessions exist for a task.
+     * A completed session is a row with end_time > 0.
+     */
+    public int getCompletedSessionCountForTask(long taskId) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        int count = 0;
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM " + DatabaseContract.StudySessions.TABLE_NAME
+                        + " WHERE " + DatabaseContract.StudySessions.COLUMN_TASK_ID + " = ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_END_TIME + " > 0",
+                new String[]{String.valueOf(taskId)}
+        );
+
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    count = cursor.getInt(0);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * Deletes a single study session by ID.
+     */
+    public int deleteSessionById(long sessionId) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        return db.delete(
+                DatabaseContract.StudySessions.TABLE_NAME,
+                DatabaseContract.StudySessions._ID + " = ?",
+                new String[]{String.valueOf(sessionId)}
+        );
+    }
+
     /**
      * Deletes all sessions for a given task.
      * (Optional helper; with ON DELETE CASCADE, deleting the task also deletes sessions.)

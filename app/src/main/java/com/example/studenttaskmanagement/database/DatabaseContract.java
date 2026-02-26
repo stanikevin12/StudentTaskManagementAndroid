@@ -44,6 +44,7 @@ public final class DatabaseContract {
          * Task status values:
          * 0 = pending
          * 1 = completed
+         * 2 = not done
          */
         public static final String COLUMN_STATUS = "status";
         public static final String COLUMN_CATEGORY_ID = "category_id";

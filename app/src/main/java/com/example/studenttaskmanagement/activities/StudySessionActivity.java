@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +26,7 @@ public class StudySessionActivity extends AppCompatActivity {
 
     private MaterialButton buttonStartSession;
     private MaterialButton buttonStopSession;
+    private MaterialButton buttonBack;
     private TextView textViewTotalStudyTime;
     private RecyclerView recyclerViewStudySessions;
 
@@ -62,6 +64,7 @@ public class StudySessionActivity extends AppCompatActivity {
     private void bindViews() {
         buttonStartSession = findViewById(R.id.buttonStartStudySession);
         buttonStopSession = findViewById(R.id.buttonStopStudySession);
+        buttonBack = findViewById(R.id.buttonBack);
         textViewTotalStudyTime = findViewById(R.id.textViewTotalStudyTime);
         recyclerViewStudySessions = findViewById(R.id.recyclerViewStudySessions);
 
@@ -81,11 +84,13 @@ public class StudySessionActivity extends AppCompatActivity {
         recyclerViewStudySessions.setLayoutManager(new LinearLayoutManager(this));
         studySessionAdapter = new StudySessionAdapter(new ArrayList<>());
         recyclerViewStudySessions.setAdapter(studySessionAdapter);
+        studySessionAdapter.setOnDeleteSessionClickListener(this::showDeleteSessionConfirmation);
     }
 
     private void setupActions() {
         buttonStartSession.setOnClickListener(v -> startSession());
         buttonStopSession.setOnClickListener(v -> stopSession());
+        buttonBack.setOnClickListener(v -> finish());
 
         // Empty state CTA
         buttonStartFirstSession.setOnClickListener(v -> startSession());
@@ -152,6 +157,35 @@ public class StudySessionActivity extends AppCompatActivity {
 
         activeSessionId = runningSessionId;
         textViewTotalStudyTime.setText(formatTotalDuration(totalDurationMs));
+    }
+
+
+    private void showDeleteSessionConfirmation(StudySession session) {
+        if (session == null || session.getId() <= 0L) {
+            Toast.makeText(this, "Invalid session", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete study session")
+                .setMessage("Do you want to delete this study session?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteSession(session))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteSession(StudySession session) {
+        int deletedRows = studySessionDao.deleteSessionById(session.getId());
+        if (deletedRows > 0) {
+            if (session.getId() == activeSessionId) {
+                activeSessionId = -1L;
+            }
+            Toast.makeText(this, "Study session deleted", Toast.LENGTH_SHORT).show();
+            refreshSessionData();
+            updateButtonsState();
+        } else {
+            Toast.makeText(this, "Unable to delete session", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String formatTotalDuration(long durationMillis) {
