@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
+import com.example.studenttaskmanagement.database.dao.StudySessionDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskStatus;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -35,6 +36,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private TextView textViewTitle;
     private TextView textViewDescription;
     private TextView textViewDeadline;
+    private TextView textViewSessionCount;
     private Chip chipStatus;
 
     private MaterialButton buttonEditTask;
@@ -42,6 +44,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     private MaterialButton buttonStudySessions;
 
     private TaskDao taskDao;
+    private StudySessionDao studySessionDao;
     private long taskId = -1L;
     private Task currentTask;
 
@@ -59,6 +62,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         taskDao = new TaskDao(this);
+        studySessionDao = new StudySessionDao(this);
 
         bindViews();
         readTaskId();
@@ -71,6 +75,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewTitle = findViewById(R.id.textViewTaskTitle);
         textViewDescription = findViewById(R.id.textViewTaskDescription);
         textViewDeadline = findViewById(R.id.textViewTaskDeadline);
+        textViewSessionCount = findViewById(R.id.textViewTaskSessionCount);
 
         // NOTE: In XML this "status" view is a Chip, but we kept the same ID for compatibility.
         chipStatus = findViewById(R.id.textViewTaskStatus);
@@ -119,6 +124,9 @@ public class TaskDetailActivity extends AppCompatActivity {
         textViewTitle.setText(nonNullText(currentTask.getTitle()));
         textViewDescription.setText(nonNullText(currentTask.getDescription()));
         textViewDeadline.setText(nonNullText(currentTask.getDeadline()));
+
+        int completedSessions = studySessionDao.getCompletedSessionCountForTask(taskId);
+        textViewSessionCount.setText(formatSessionCount(completedSessions));
 
         int status = currentTask.getStatus();
         chipStatus.setText(TaskStatus.getLabel(status));
@@ -208,6 +216,20 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadTask();
+    }
+
+    private String formatSessionCount(int completedSessions) {
+        if (completedSessions == 1) {
+            return "Study sessions done: 1 session";
+        }
+        return "Study sessions done: " + completedSessions + " sessions";
     }
 
     private String nonNullText(@Nullable String value) {
