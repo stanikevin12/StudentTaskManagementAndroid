@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -14,11 +16,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
+import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskStatus;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -34,12 +38,18 @@ public class AddTaskActivity extends AppCompatActivity {
     private static final long DEFAULT_PRIORITY_ID = 1L;
     private static final long DEFAULT_USER_ID = 1L;
 
+    private static final int REMINDER_NONE = 0;
+    private static final int REMINDER_AT_DEADLINE = 1;
+    private static final int REMINDER_30_MIN_BEFORE = 2;
+
     private TextInputEditText editTextTitle;
     private TextInputEditText editTextDescription;
     private TextInputEditText editTextDeadline;
+    private Spinner spinnerReminder;
     private Button buttonSaveTask;
 
     private TaskDao taskDao;
+    private TaskNotificationDao taskNotificationDao;
 
     // Deadline picker state
     private final Calendar deadlineCal = Calendar.getInstance();
@@ -61,8 +71,10 @@ public class AddTaskActivity extends AppCompatActivity {
         }
 
         taskDao = new TaskDao(this);
+        taskNotificationDao = new TaskNotificationDao(this);
 
         bindViews();
+        setupReminderSpinner();
         setupDeadlinePicker();
         setupActions();
     }
@@ -71,7 +83,19 @@ public class AddTaskActivity extends AppCompatActivity {
         editTextTitle = findViewById(R.id.editTextTaskTitle);
         editTextDescription = findViewById(R.id.editTextTaskDescription);
         editTextDeadline = findViewById(R.id.editTextTaskDeadline);
+        spinnerReminder = findViewById(R.id.spinnerTaskReminder);
         buttonSaveTask = findViewById(R.id.buttonSaveTask);
+    }
+
+    private void setupReminderSpinner() {
+        String[] reminderOptions = {"No reminder", "At deadline", "30 min before"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                reminderOptions
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminder.setAdapter(adapter);
     }
 
     private void setupActions() {
@@ -165,12 +189,41 @@ public class AddTaskActivity extends AppCompatActivity {
 
         long insertedId = taskDao.insertTask(task);
         if (insertedId != -1) {
+            saveReminder(insertedId, deadline);
             Toast.makeText(this, "Task saved", Toast.LENGTH_SHORT).show();
             finish();
             overridePendingTransition(0, R.anim.fade_out);
         } else {
             Toast.makeText(this, "Unable to save task", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void saveReminder(long taskId, @Nullable String deadline) {
+        Long reminderTimeMillis = getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
+        if (reminderTimeMillis == null) {
+            taskNotificationDao.deleteNotificationByTaskId(taskId);
+            return;
+        }
+        taskNotificationDao.upsertNotificationForTask(taskId, reminderTimeMillis);
+    }
+
+    @Nullable
+    private Long getReminderTimeMillis(@Nullable String deadline, int reminderOption) {
+        if (reminderOption == REMINDER_NONE || TextUtils.isEmpty(deadline)) {
+            return null;
+        }
+
+        try {
+            long deadlineMillis = deadlineFormat.parse(deadline).getTime();
+            if (reminderOption == REMINDER_AT_DEADLINE) {
+                return deadlineMillis;
+            }
+            if (reminderOption == REMINDER_30_MIN_BEFORE) {
+                return deadlineMillis - (30L * 60L * 1000L);
+            }
+        } catch (ParseException | NullPointerException ignored) {
+        }
+        return null;
     }
 
     private void hideKeyboard() {
