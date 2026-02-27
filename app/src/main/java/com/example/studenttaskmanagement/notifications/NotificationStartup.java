@@ -7,7 +7,6 @@ import android.os.Build;
 
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
-import androidx.work.PeriodicWorkRequestBuilder;
 import androidx.work.WorkManager;
 
 import java.util.concurrent.TimeUnit;
@@ -16,12 +15,12 @@ public final class NotificationStartup {
 
     public static final String TASK_REMINDERS_CHANNEL_ID = "task_reminders";
     private static final String TASK_REMINDERS_CHANNEL_NAME = "Task reminders";
-    private static final String TASK_REMINDERS_CHANNEL_DESCRIPTION = "Notifications for upcoming task reminders";
+    private static final String TASK_REMINDERS_CHANNEL_DESCRIPTION =
+            "Notifications for upcoming task reminders";
 
     private static final String TASK_REMINDER_WORK_NAME = "task_reminder_periodic_worker";
 
-    private NotificationStartup() {
-    }
+    private NotificationStartup() {}
 
     public static void initialize(Context context) {
         createNotificationChannel(context);
@@ -29,9 +28,7 @@ public final class NotificationStartup {
     }
 
     private static void createNotificationChannel(Context context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return;
-        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
 
         NotificationChannel channel = new NotificationChannel(
                 TASK_REMINDERS_CHANNEL_ID,
@@ -40,15 +37,14 @@ public final class NotificationStartup {
         );
         channel.setDescription(TASK_REMINDERS_CHANNEL_DESCRIPTION);
 
-        NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-        if (notificationManager != null) {
-            notificationManager.createNotificationChannel(channel);
-        }
+        NotificationManager nm = context.getSystemService(NotificationManager.class);
+        if (nm != null) nm.createNotificationChannel(channel);
     }
 
     private static void schedulePeriodicReminderWorker(Context context) {
-        PeriodicWorkRequest reminderWork = new PeriodicWorkRequestBuilder<TaskReminderWorker>(15, TimeUnit.MINUTES)
-                .build();
+        PeriodicWorkRequest reminderWork =
+                new PeriodicWorkRequest.Builder(TaskReminderWorker.class, 15, TimeUnit.MINUTES)
+                        .build();
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 TASK_REMINDER_WORK_NAME,
