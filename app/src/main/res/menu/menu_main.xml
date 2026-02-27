@@ -7,6 +7,12 @@
         android:title="Add Task"
         app:showAsAction="never" />
 
+
+    <item
+        android:id="@+id/menuSettings"
+        android:title="Settings"
+        app:showAsAction="never" />
+
     <item
         android:id="@+id/menuAbout"
         android:title="About"

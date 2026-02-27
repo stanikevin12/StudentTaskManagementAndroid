@@ -24,7 +24,15 @@ public final class NotificationStartup {
 
     public static void initialize(Context context) {
         createNotificationChannel(context);
-        schedulePeriodicReminderWorker(context);
+        updateReminderWorkerSchedule(context);
+    }
+
+    public static void updateReminderWorkerSchedule(Context context) {
+        if (NotificationPreferences.areRemindersEnabled(context)) {
+            schedulePeriodicReminderWorker(context);
+        } else {
+            cancelPeriodicReminderWorker(context);
+        }
     }
 
     private static void createNotificationChannel(Context context) {
