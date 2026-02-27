@@ -25,7 +25,15 @@ public final class NotificationStartup {
 
     public static void initialize(Context context) {
         createNotificationChannel(context);
-        schedulePeriodicReminderWorker(context);
+        updateReminderWorkerSchedule(context);
+    }
+
+    public static void updateReminderWorkerSchedule(Context context) {
+        if (NotificationPreferences.areRemindersEnabled(context)) {
+            schedulePeriodicReminderWorker(context);
+        } else {
+            cancelPeriodicReminderWorker(context);
+        }
     }
 
     private static void createNotificationChannel(Context context) {
@@ -55,5 +63,9 @@ public final class NotificationStartup {
                 ExistingPeriodicWorkPolicy.KEEP,
                 reminderWork
         );
+    }
+
+    private static void cancelPeriodicReminderWorker(Context context) {
+        WorkManager.getInstance(context).cancelUniqueWork(TASK_REMINDER_WORK_NAME);
     }
 }

@@ -7,6 +7,13 @@
         android:title="Add Task"
         app:showAsAction="never" />
 
+
+    <item
+        android:id="@+id/menuSettings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Settings"
+        app:showAsAction="always" />
+
     <item
         android:id="@+id/menuAbout"
         android:title="About"
