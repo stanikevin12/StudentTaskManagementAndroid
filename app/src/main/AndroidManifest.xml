@@ -12,12 +12,12 @@
         android:theme="@style/Theme.StudentTaskManagement">
 
         <!-- MAIN / LAUNCHER ACTIVITY -->
+        <activity android:name=".activities.MainActivity" />
+
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".activities.LauncherActivity"
             android:exported="true"
             android:theme="@style/Theme.StudentTaskManagement.Splash">
-
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -30,6 +30,8 @@
         <activity android:name=".activities.TaskDetailActivity" />
         <activity android:name=".activities.TasksActivity" />
         <activity android:name=".activities.SettingsActivity" />
+        <activity android:name=".activities.LoginActivity" />
+        <activity android:name=".activities.RegisterActivity" />
 
         <!-- STUDY SESSION -->
         <activity android:name=".activities.StudySessionActivity" />
