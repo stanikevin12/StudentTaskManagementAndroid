@@ -14,8 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
+import com.example.studenttaskmanagement.database.dao.PriorityDao;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
+import com.example.studenttaskmanagement.model.Priority;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskNotification;
 import com.example.studenttaskmanagement.model.TaskStatus;
@@ -29,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.List;
 
 /**
  * Activity responsible for editing an existing task.
@@ -44,13 +47,16 @@ public class EditTaskActivity extends AppCompatActivity {
     private TextInputEditText editTextDescription;
     private TextInputEditText editTextDeadline;
     private Spinner spinnerStatus;
+    private Spinner spinnerPriority;
     private Spinner spinnerReminder;
     private MaterialButton buttonUpdateTask;
 
     private TaskDao taskDao;
+    private PriorityDao priorityDao;
     private TaskNotificationDao taskNotificationDao;
     private long taskId = -1L;
     private Task currentTask;
+    private List<Priority> priorities;
 
     // Deadline picker state
     private final Calendar deadlineCal = Calendar.getInstance();
@@ -72,10 +78,12 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         taskDao = new TaskDao(this);
+        priorityDao = new PriorityDao(this);
         taskNotificationDao = new TaskNotificationDao(this);
 
         bindViews();
         setupStatusSpinner();
+        setupPrioritySpinner();
         setupReminderSpinner();
         setupDeadlinePicker();
         readTaskId();
@@ -88,6 +96,7 @@ public class EditTaskActivity extends AppCompatActivity {
         editTextDescription = findViewById(R.id.editTextTaskDescription);
         editTextDeadline = findViewById(R.id.editTextTaskDeadline);
         spinnerStatus = findViewById(R.id.spinnerTaskStatus);
+        spinnerPriority = findViewById(R.id.spinnerTaskPriority);
         spinnerReminder = findViewById(R.id.spinnerTaskReminder);
         buttonUpdateTask = findViewById(R.id.buttonUpdateTask);
     }
@@ -100,6 +109,29 @@ public class EditTaskActivity extends AppCompatActivity {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
+    }
+
+
+    private void setupPrioritySpinner() {
+        priorities = priorityDao.getAllPriorities();
+
+        String[] labels;
+        if (priorities == null || priorities.isEmpty()) {
+            labels = new String[]{"Low"};
+        } else {
+            labels = new String[priorities.size()];
+            for (int i = 0; i < priorities.size(); i++) {
+                labels[i] = priorities.get(i).getLabel();
+            }
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                labels
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerPriority.setAdapter(adapter);
     }
 
     private void setupReminderSpinner() {
@@ -215,6 +247,7 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         spinnerStatus.setSelection(getStatusIndex(currentTask.getStatus()));
+        spinnerPriority.setSelection(getPriorityIndex(currentTask.getPriorityId()));
         loadReminderSelection(deadline);
     }
 
@@ -267,6 +300,7 @@ public class EditTaskActivity extends AppCompatActivity {
         currentTask.setDescription(description);
         currentTask.setDeadline(deadline);
         currentTask.setStatus(getStatusValue(spinnerStatus.getSelectedItemPosition()));
+        currentTask.setPriorityId(getSelectedPriorityId());
 
         int updatedRows = taskDao.updateTask(currentTask);
         if (updatedRows > 0) {
@@ -328,6 +362,22 @@ public class EditTaskActivity extends AppCompatActivity {
         } catch (ParseException | NullPointerException ignored) {
             return null;
         }
+    }
+
+
+    private int getPriorityIndex(long priorityId) {
+        if (priorities == null || priorities.isEmpty()) return 0;
+        for (int i = 0; i < priorities.size(); i++) {
+            if (priorities.get(i).getId() == priorityId) return i;
+        }
+        return 0;
+    }
+
+    private long getSelectedPriorityId() {
+        if (priorities == null || priorities.isEmpty()) return 1L;
+        int position = spinnerPriority.getSelectedItemPosition();
+        if (position < 0 || position >= priorities.size()) return priorities.get(0).getId();
+        return priorities.get(position).getId();
     }
 
     private int getStatusIndex(int status) {
