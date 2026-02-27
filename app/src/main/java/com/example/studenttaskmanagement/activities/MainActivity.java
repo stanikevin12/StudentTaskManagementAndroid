@@ -21,10 +21,12 @@ import androidx.core.splashscreen.SplashScreen;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.StudySessionDao;
+import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.notifications.NotificationStartup;
 import com.example.studenttaskmanagement.presentation.dashboard.DashboardKpiCard;
 import com.example.studenttaskmanagement.presentation.dashboard.DashboardUiState;
 import com.example.studenttaskmanagement.presentation.dashboard.DashboardViewModel;
+import com.example.studenttaskmanagement.presentation.dashboard.ProjectCompletionForecast;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
@@ -45,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView[] dashboardValueViews;
     private TextView[] dashboardTrendViews;
     private MaterialButton buttonSeeAllTasks;
+
+    private TextView textForecastCompletion;
+    private TextView textForecastEta;
+    private TextView textForecastRisk;
 
     private DashboardViewModel dashboardViewModel;
 
@@ -75,6 +81,10 @@ public class MainActivity extends AppCompatActivity {
         textDashboardState = findViewById(R.id.textDashboardState);
         layoutDashboardCards = findViewById(R.id.layoutDashboardCards);
         buttonSeeAllTasks = findViewById(R.id.buttonSeeAllTasks);
+
+        textForecastCompletion = findViewById(R.id.textForecastCompletion);
+        textForecastEta = findViewById(R.id.textForecastEta);
+        textForecastRisk = findViewById(R.id.textForecastRisk);
 
         dashboardLabelViews = new TextView[]{
                 findViewById(R.id.textCard1Label),
@@ -110,7 +120,10 @@ public class MainActivity extends AppCompatActivity {
     private void initDashboard() {
         dbExecutor.execute(() -> {
             try {
-                dashboardViewModel = new DashboardViewModel(new StudySessionDao(getApplicationContext()));
+                dashboardViewModel = new DashboardViewModel(
+                        new StudySessionDao(getApplicationContext()),
+                        new TaskDao(getApplicationContext())
+                );
                 DashboardUiState dashboardUiState = dashboardViewModel.loadWeeklySummary();
 
                 mainHandler.post(() -> {
@@ -170,6 +183,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        renderProjectForecast(state.getCompletionForecast());
+
         switch (state.getStatus()) {
             case LOADING:
                 showDashboardLoading(state.getMessage());
@@ -184,6 +199,27 @@ public class MainActivity extends AppCompatActivity {
             default:
                 showDashboardContent(state.getCards());
                 break;
+        }
+    }
+
+    private void renderProjectForecast(ProjectCompletionForecast forecast) {
+        if (forecast == null) {
+            textForecastCompletion.setText("Current completion: --");
+            textForecastEta.setText("Estimated completion date: --");
+            textForecastRisk.setText("Risk: --");
+            textForecastRisk.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+            return;
+        }
+
+        textForecastCompletion.setText("Current completion: " + forecast.getCompletionPercentText());
+        textForecastEta.setText("Estimated completion date: " + forecast.getEstimatedCompletionDateText());
+
+        if (forecast.isAtRisk()) {
+            textForecastRisk.setText("At risk");
+            textForecastRisk.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
+        } else {
+            textForecastRisk.setText("On track");
+            textForecastRisk.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
         }
     }
 

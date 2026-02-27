@@ -1,21 +1,33 @@
 package com.example.studenttaskmanagement.presentation.dashboard;
 
 import com.example.studenttaskmanagement.database.dao.StudySessionDao;
+import com.example.studenttaskmanagement.database.dao.TaskDao;
+import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.model.TaskStatus;
 import com.example.studenttaskmanagement.utils.WeekTimeUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardViewModel {
 
-    private final StudySessionDao studySessionDao;
+    private static final String DEADLINE_FORMAT = "yyyy-MM-dd HH:mm";
 
-    public DashboardViewModel(StudySessionDao studySessionDao) {
+    private final StudySessionDao studySessionDao;
+    private final TaskDao taskDao;
+
+    public DashboardViewModel(StudySessionDao studySessionDao, TaskDao taskDao) {
         this.studySessionDao = studySessionDao;
+        this.taskDao = taskDao;
     }
 
     public DashboardUiState loadWeeklySummary() {
+        ProjectCompletionForecast forecast = buildProjectForecast();
+
         WeekTimeUtils.WeekRange currentWeek = WeekTimeUtils.getCurrentWeekRange();
         WeekTimeUtils.WeekRange previousWeek = WeekTimeUtils.getPreviousWeekRange();
 
@@ -50,7 +62,7 @@ public class DashboardViewModel {
         );
 
         if (currentCount == 0 && previousCount == 0) {
-            return DashboardUiState.empty("No study sessions yet this week.");
+            return DashboardUiState.empty("No study sessions yet this week.", forecast);
         }
 
         List<DashboardKpiCard> cards = new ArrayList<>();
@@ -72,7 +84,73 @@ public class DashboardViewModel {
                 previousCompletionRate
         ));
 
-        return DashboardUiState.content(cards);
+        return DashboardUiState.content(cards, forecast);
+    }
+
+    private ProjectCompletionForecast buildProjectForecast() {
+        List<Task> tasks = taskDao.getAllTasks();
+        if (tasks == null) tasks = new ArrayList<>();
+
+        int total = tasks.size();
+        int completed = 0;
+        int remaining = 0;
+        int completedWithDeadlineInRecentWindow = 0;
+
+        Date nearestPendingDeadline = null;
+        Date now = new Date();
+        long recentWindowStartMillis = now.getTime() - (14L * 24L * 60L * 60L * 1000L);
+
+        for (Task task : tasks) {
+            boolean isCompleted = task.getStatus() == TaskStatus.COMPLETED;
+            if (isCompleted) {
+                completed++;
+            } else {
+                remaining++;
+            }
+
+            Date deadlineDate = parseDeadline(task.getDeadline());
+            if (deadlineDate == null) {
+                continue;
+            }
+
+            if (!isCompleted && (nearestPendingDeadline == null || deadlineDate.before(nearestPendingDeadline))) {
+                nearestPendingDeadline = deadlineDate;
+            }
+
+            if (isCompleted && deadlineDate.getTime() >= recentWindowStartMillis && deadlineDate.getTime() <= now.getTime()) {
+                completedWithDeadlineInRecentWindow++;
+            }
+        }
+
+        double completionPercent = total <= 0 ? 0D : (completed * 100D) / total;
+        String completionPercentText = String.format(Locale.getDefault(), "%.0f%% (%d/%d tasks)", completionPercent, completed, total);
+
+        String estimatedCompletionDateText = "Insufficient data";
+        Date estimatedCompletionDate = null;
+        if (remaining <= 0) {
+            estimatedCompletionDate = now;
+            estimatedCompletionDateText = "Completed";
+        } else {
+            double velocityTasksPerDay = completedWithDeadlineInRecentWindow / 14D;
+            if (velocityTasksPerDay > 0.01D) {
+                int daysToFinish = (int) Math.ceil(remaining / velocityTasksPerDay);
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(now);
+                calendar.add(Calendar.DAY_OF_YEAR, daysToFinish);
+                estimatedCompletionDate = calendar.getTime();
+                estimatedCompletionDateText = "~ " + formatDate(estimatedCompletionDate);
+            }
+        }
+
+        boolean atRisk = estimatedCompletionDate != null
+                && nearestPendingDeadline != null
+                && estimatedCompletionDate.after(nearestPendingDeadline);
+
+        return new ProjectCompletionForecast(
+                completionPercentText,
+                estimatedCompletionDateText,
+                atRisk
+        );
     }
 
     private DashboardKpiCard buildCard(String label, String value, double current, double previous) {
@@ -102,5 +180,21 @@ public class DashboardViewModel {
             return 0D;
         }
         return (numerator * 100D) / denominator;
+    }
+
+    private Date parseDeadline(String deadline) {
+        if (deadline == null || deadline.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new SimpleDateFormat(DEADLINE_FORMAT, Locale.getDefault()).parse(deadline.trim());
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String formatDate(Date date) {
+        return new SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date);
     }
 }
