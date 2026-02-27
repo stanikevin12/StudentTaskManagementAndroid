@@ -73,9 +73,10 @@ public class TaskNotificationDao {
         int rows = db.update(
                 DatabaseContract.Notifications.TABLE_NAME,
                 values,
-                DatabaseContract.Notifications.COLUMN_TASK_ID + " = ?",
-                new String[]{String.valueOf(taskId)}
+                DatabaseContract.Notifications._ID + " = ?",
+                new String[]{String.valueOf(existing.getId())}
         );
+
         return rows > 0 ? existing.getId() : -1L;
     }
 

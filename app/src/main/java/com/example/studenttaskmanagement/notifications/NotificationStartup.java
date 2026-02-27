@@ -1,3 +1,4 @@
+// NotificationStartup.java
 package com.example.studenttaskmanagement.notifications;
 
 import android.app.NotificationChannel;
@@ -5,6 +6,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -22,28 +24,23 @@ public final class NotificationStartup {
 
     private NotificationStartup() {}
 
-    public static void initialize(Context context) {
-        createNotificationChannel(context);
-        updateReminderWorkerSchedule(context);
+    public static void initialize(@NonNull Context context) {
+        Context appCtx = context.getApplicationContext();
+        createNotificationChannel(appCtx);
+        updateReminderWorkerSchedule(appCtx);
     }
 
-    public static void updateReminderWorkerSchedule(Context context) {
-        if (NotificationPreferences.areRemindersEnabled(context)) {
-            schedulePeriodicReminderWorker(context);
+    /** Call this after the user toggles reminders ON/OFF in Settings. */
+    public static void updateReminderWorkerSchedule(@NonNull Context context) {
+        Context appCtx = context.getApplicationContext();
+        if (NotificationPreferences.areRemindersEnabled(appCtx)) {
+            schedulePeriodicReminderWorker(appCtx);
         } else {
-            cancelPeriodicReminderWorker(context);
+            cancelPeriodicReminderWorker(appCtx);
         }
     }
 
-    public static void updateReminderWorkerSchedule(Context context) {
-        if (NotificationPreferences.areRemindersEnabled(context)) {
-            schedulePeriodicReminderWorker(context);
-        } else {
-            cancelPeriodicReminderWorker(context);
-        }
-    }
-
-    private static void createNotificationChannel(Context context) {
+    private static void createNotificationChannel(@NonNull Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
 
         NotificationChannel channel = new NotificationChannel(
@@ -57,18 +54,20 @@ public final class NotificationStartup {
         if (nm != null) nm.createNotificationChannel(channel);
     }
 
-    private static void schedulePeriodicReminderWorker(Context context) {
+    private static void schedulePeriodicReminderWorker(@NonNull Context context) {
+        // WorkManager minimum interval for PeriodicWork is 15 minutes.
         PeriodicWorkRequest reminderWork =
                 new PeriodicWorkRequest.Builder(TaskReminderWorker.class, 15, TimeUnit.MINUTES)
                         .build();
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 TASK_REMINDER_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE, // update if schedule/worker changes
                 reminderWork
         );
     }
-    private static void cancelPeriodicReminderWorker(Context context) {
+
+    private static void cancelPeriodicReminderWorker(@NonNull Context context) {
         WorkManager.getInstance(context).cancelUniqueWork(TASK_REMINDER_WORK_NAME);
     }
 }

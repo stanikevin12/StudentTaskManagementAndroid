@@ -20,6 +20,7 @@ import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.notifications.NotificationPreferences;
 import com.example.studenttaskmanagement.model.TaskStatus;
+import com.example.studenttaskmanagement.notifications.NotificationStartup;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -207,39 +208,50 @@ public class AddTaskActivity extends AppCompatActivity {
     }
 
     private void saveReminder(long taskId, @Nullable String deadline) {
+
         if (!NotificationPreferences.areRemindersEnabled(this)) {
             taskNotificationDao.deleteNotificationByTaskId(taskId);
+
+            // ✅ ensure worker stops if no reminders
+            NotificationStartup.updateReminderWorkerSchedule(getApplicationContext());
             return;
         }
 
-        Long reminderTimeMillis = getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
+        Long reminderTimeMillis =
+                getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
+
         if (reminderTimeMillis == null) {
             taskNotificationDao.deleteNotificationByTaskId(taskId);
+
+            NotificationStartup.updateReminderWorkerSchedule(getApplicationContext());
             return;
         }
         taskNotificationDao.upsertNotificationForTask(taskId, reminderTimeMillis);
+        NotificationStartup.updateReminderWorkerSchedule(getApplicationContext());
     }
 
     @Nullable
     private Long getReminderTimeMillis(@Nullable String deadline, int reminderOption) {
-        if (reminderOption == REMINDER_NONE || TextUtils.isEmpty(deadline)) {
-            return null;
-        }
+        if (reminderOption == REMINDER_NONE || TextUtils.isEmpty(deadline)) return null;
 
         try {
             long deadlineMillis = deadlineFormat.parse(deadline).getTime();
-            if (reminderOption == REMINDER_AT_DEADLINE) {
-                return deadlineMillis;
-            }
+            long reminderMillis = deadlineMillis;
+
             if (reminderOption == REMINDER_30_MIN_BEFORE) {
-                return deadlineMillis - (30L * 60L * 1000L);
+                reminderMillis = deadlineMillis - (30L * 60L * 1000L);
+            } else if (reminderOption == REMINDER_60_MIN_BEFORE) {
+                reminderMillis = deadlineMillis - (60L * 60L * 1000L);
             }
-            if (reminderOption == REMINDER_60_MIN_BEFORE) {
-                return deadlineMillis - (60L * 60L * 1000L);
-            }
-        } catch (ParseException | NullPointerException ignored) {
+
+            // ✅ don't schedule in the past
+            if (reminderMillis <= System.currentTimeMillis()) return null;
+
+            return reminderMillis;
+
+        } catch (Exception ignored) {
+            return null;
         }
-        return null;
     }
 
 

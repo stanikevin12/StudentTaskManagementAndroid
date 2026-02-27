@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -71,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         NotificationStartup.initialize(getApplicationContext());
 
         bindViews();
-        setupToolbarMenu();
+        setupToolbar();
         setupRecycler();
         setupActions();
         setupSearch();
@@ -98,27 +99,36 @@ public class MainActivity extends AppCompatActivity {
         fabAddTask = findViewById(R.id.fabAddTask);
     }
 
-    private void setupToolbarMenu() {
-        // We are not relying on app:menu in XML anymore (more robust)
+    private void setupToolbar() {
         setSupportActionBar(toolbarMain);
         toolbarMain.setTitle("My Tasks");
-        toolbarMain.getMenu().clear();
-        toolbarMain.inflateMenu(R.menu.menu_main);
+        // IMPORTANT: do NOT inflate menu here; AppCompat will manage it via onCreateOptionsMenu()
+    }
 
-        toolbarMain.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.menuAddTask) {
-                openAddTask();
-                return true;
-            } else if (id == R.id.menuSettings) {
-                openSettings();
-                return true;
-            } else if (id == R.id.menuAbout) {
-                showAboutDialog();
-                return true;
-            }
-            return false;
-        });
+    // ✅ This is the correct way when using setSupportActionBar(toolbar)
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    // ✅ Handle menu clicks here
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.menuAddTask) {
+            openAddTask();
+            return true;
+        } else if (id == R.id.menuSettings) {
+            openSettings();
+            return true;
+        } else if (id == R.id.menuAbout) {
+            showAboutDialog();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void setupRecycler() {
@@ -167,6 +177,9 @@ public class MainActivity extends AppCompatActivity {
 
                     applyFilter(q);
                     setDebug("Loaded tasks: " + allTasks.size());
+
+                    // force toolbar to refresh menu once activity is ready (helps on some devices)
+                    invalidateOptionsMenu();
                 });
 
             } catch (Throwable t) {
@@ -177,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                             "Database error",
                             "Could not load tasks. You can still try adding a new task."
                     );
+                    invalidateOptionsMenu();
                 });
             }
         });

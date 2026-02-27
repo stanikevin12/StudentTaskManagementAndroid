@@ -1,3 +1,4 @@
+// TaskReminderWorker.java
 package com.example.studenttaskmanagement.notifications;
 
 import android.Manifest;
@@ -31,6 +32,8 @@ public class TaskReminderWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
+
+        // If user turned reminders off, do nothing.
         if (!NotificationPreferences.areRemindersEnabled(context)) {
             return Result.success();
         }
@@ -41,9 +44,14 @@ public class TaskReminderWorker extends Worker {
         TaskDao taskDao = new TaskDao(context);
 
         List<TaskNotification> pending = notificationDao.getPendingNotifications(nowMillis);
+        if (pending == null || pending.isEmpty()) {
+            return Result.success();
+        }
+
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
         for (TaskNotification reminder : pending) {
+
             Task task = taskDao.getTaskById(reminder.getTaskId());
             if (task == null) {
                 notificationDao.markNotificationAsSent(reminder.getId());
@@ -53,23 +61,33 @@ public class TaskReminderWorker extends Worker {
             String title = task.getTitle() == null || task.getTitle().trim().isEmpty()
                     ? "Task reminder"
                     : task.getTitle().trim();
+
             String deadline = task.getDeadline() == null || task.getDeadline().trim().isEmpty()
                     ? "No deadline"
                     : task.getDeadline().trim();
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, NotificationStartup.TASK_REMINDERS_CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("Upcoming task")
-                    .setContentText(title + " • Deadline: " + deadline)
-                    .setStyle(new NotificationCompat.BigTextStyle()
-                            .bigText("Task: " + title + "\nDeadline: " + deadline + "\nScheduled: " + new Date(reminder.getNotifyTimeMillis())))
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(context, NotificationStartup.TASK_REMINDERS_CHANNEL_ID)
+                            // Better if you have a dedicated small icon: R.drawable.ic_notification
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle("Upcoming task")
+                            .setContentText(title + " • Deadline: " + deadline)
+                            .setStyle(new NotificationCompat.BigTextStyle().bigText(
+                                    "Task: " + title +
+                                            "\nDeadline: " + deadline +
+                                            "\nScheduled: " + new Date(reminder.getNotifyTimeMillis())
+                            ))
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .setAutoCancel(true);
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+            boolean canNotify = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                     || ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                    == PackageManager.PERMISSION_GRANTED) {
-                notificationManager.notify((int) reminder.getId(), builder.build());
+                    == PackageManager.PERMISSION_GRANTED;
+
+            if (canNotify) {
+                // Avoid overflow/collision if DB id grows large
+                int notificationId = (int) (reminder.getId() % Integer.MAX_VALUE);
+                notificationManager.notify(notificationId, builder.build());
             }
 
             notificationDao.markNotificationAsSent(reminder.getId());

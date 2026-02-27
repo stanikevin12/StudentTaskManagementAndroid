@@ -122,9 +122,9 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
     private String createNotificationsTable() {
         return "CREATE TABLE IF NOT EXISTS " + DatabaseContract.Notifications.TABLE_NAME + " ("
                 + DatabaseContract.Notifications._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + DatabaseContract.Notifications.COLUMN_TASK_ID + " INTEGER, "
-                + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " INTEGER, "
-                + DatabaseContract.Notifications.COLUMN_IS_SENT + " INTEGER DEFAULT 0, "
+                + DatabaseContract.Notifications.COLUMN_TASK_ID + " INTEGER NOT NULL, "
+                + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " INTEGER NOT NULL, "
+                + DatabaseContract.Notifications.COLUMN_IS_SENT + " INTEGER NOT NULL DEFAULT 0, "
                 + "UNIQUE(" + DatabaseContract.Notifications.COLUMN_TASK_ID + "), "
                 + "FOREIGN KEY(" + DatabaseContract.Notifications.COLUMN_TASK_ID + ") REFERENCES "
                 + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ") ON DELETE CASCADE"

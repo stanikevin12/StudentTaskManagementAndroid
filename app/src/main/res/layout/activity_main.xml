@@ -17,8 +17,11 @@
             android:id="@+id/toolbarMain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/purple_500"
             app:title="My Tasks"
-            app:titleCentered="false"/>
+            app:titleCentered="false"
+            app:titleTextColor="@android:color/white"
+            app:menu="@menu/menu_main"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout

@@ -5,8 +5,11 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -25,13 +28,17 @@ public class SettingsActivity extends AppCompatActivity {
 
     private MaterialSwitch switchTaskReminders;
     private Spinner spinnerDefaultLead;
+    private TextView textReminderStatus;
+
+    private boolean isBinding = false;
 
     private final ActivityResultLauncher<String> notificationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     setReminderEnabledInternal(true);
                 } else {
-                    switchTaskReminders.setChecked(false);
+                    // keep OFF if permission denied
+                    if (switchTaskReminders != null) switchTaskReminders.setChecked(false);
                     Toast.makeText(
                             this,
                             "Notification permission denied. Reminders remain off.",
@@ -51,9 +58,12 @@ public class SettingsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Settings");
         }
+        // Also handle toolbar nav click
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         switchTaskReminders = findViewById(R.id.switchTaskReminders);
         spinnerDefaultLead = findViewById(R.id.spinnerDefaultLead);
+        textReminderStatus = findViewById(R.id.textReminderStatus);
 
         setupLeadTimeSpinner();
         bindCurrentValues();
@@ -72,16 +82,24 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void bindCurrentValues() {
+        isBinding = true;
+
         boolean enabled = NotificationPreferences.areRemindersEnabled(this);
         switchTaskReminders.setChecked(enabled);
         spinnerDefaultLead.setEnabled(enabled);
 
         int leadMinutes = NotificationPreferences.getDefaultLeadTimeMinutes(this);
-        spinnerDefaultLead.setSelection(leadToPosition(leadMinutes));
+        spinnerDefaultLead.setSelection(leadToPosition(leadMinutes), false);
+
+        updateStatus(enabled);
+
+        isBinding = false;
     }
 
     private void setupActions() {
         switchTaskReminders.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isBinding) return;
+
             if (isChecked) {
                 requestPermissionIfNeededAndEnable();
             } else {
@@ -89,15 +107,20 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        spinnerDefaultLead.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+        spinnerDefaultLead.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
-                NotificationPreferences.setDefaultLeadTimeMinutes(SettingsActivity.this, positionToLead(position));
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (isBinding) return;
+
+                int minutes = positionToLead(position);
+                NotificationPreferences.setDefaultLeadTimeMinutes(SettingsActivity.this, minutes);
+
+                // If reminders are enabled, we can refresh scheduling (safe)
+                NotificationStartup.updateReminderWorkerSchedule(getApplicationContext());
             }
 
             @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {
-            }
+            public void onNothingSelected(AdapterView<?> parent) { }
         });
     }
 
@@ -119,13 +142,22 @@ public class SettingsActivity extends AppCompatActivity {
     private void setReminderEnabledInternal(boolean enabled) {
         NotificationPreferences.setRemindersEnabled(this, enabled);
         spinnerDefaultLead.setEnabled(enabled);
+        updateStatus(enabled);
+
+        // Start/stop the periodic worker
         NotificationStartup.updateReminderWorkerSchedule(getApplicationContext());
+    }
+
+    private void updateStatus(boolean enabled) {
+        if (textReminderStatus != null) {
+            textReminderStatus.setText(enabled ? "ON" : "OFF");
+        }
     }
 
     private int leadToPosition(int leadMinutes) {
         if (leadMinutes == NotificationPreferences.LEAD_TIME_AT_DEADLINE) return 0;
         if (leadMinutes == NotificationPreferences.LEAD_TIME_60_MIN) return 2;
-        return 1;
+        return 1; // default 30
     }
 
     private int positionToLead(int position) {
