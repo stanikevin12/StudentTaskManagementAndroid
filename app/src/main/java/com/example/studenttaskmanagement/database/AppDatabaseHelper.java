@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "student_task_management.db";
-    private static final int DATABASE_VERSION = 2; // <-- bumped from 1 to 2
+    private static final int DATABASE_VERSION = 3;
 
     public AppDatabaseHelper(@NonNull Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -123,8 +123,9 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         return "CREATE TABLE IF NOT EXISTS " + DatabaseContract.Notifications.TABLE_NAME + " ("
                 + DatabaseContract.Notifications._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DatabaseContract.Notifications.COLUMN_TASK_ID + " INTEGER, "
-                + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " TEXT, "
+                + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " INTEGER, "
                 + DatabaseContract.Notifications.COLUMN_IS_SENT + " INTEGER DEFAULT 0, "
+                + "UNIQUE(" + DatabaseContract.Notifications.COLUMN_TASK_ID + "), "
                 + "FOREIGN KEY(" + DatabaseContract.Notifications.COLUMN_TASK_ID + ") REFERENCES "
                 + DatabaseContract.Tasks.TABLE_NAME + "(" + DatabaseContract.Tasks._ID + ") ON DELETE CASCADE"
                 + ")";

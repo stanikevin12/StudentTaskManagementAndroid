@@ -15,7 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
+import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.model.TaskNotification;
 import com.example.studenttaskmanagement.model.TaskStatus;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -31,13 +33,19 @@ import java.util.Locale;
  */
 public class EditTaskActivity extends AppCompatActivity {
 
+    private static final int REMINDER_NONE = 0;
+    private static final int REMINDER_AT_DEADLINE = 1;
+    private static final int REMINDER_30_MIN_BEFORE = 2;
+
     private TextInputEditText editTextTitle;
     private TextInputEditText editTextDescription;
     private TextInputEditText editTextDeadline;
     private Spinner spinnerStatus;
+    private Spinner spinnerReminder;
     private MaterialButton buttonUpdateTask;
 
     private TaskDao taskDao;
+    private TaskNotificationDao taskNotificationDao;
     private long taskId = -1L;
     private Task currentTask;
 
@@ -61,9 +69,11 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         taskDao = new TaskDao(this);
+        taskNotificationDao = new TaskNotificationDao(this);
 
         bindViews();
         setupStatusSpinner();
+        setupReminderSpinner();
         setupDeadlinePicker();
         readTaskId();
         setupActions();
@@ -75,6 +85,7 @@ public class EditTaskActivity extends AppCompatActivity {
         editTextDescription = findViewById(R.id.editTextTaskDescription);
         editTextDeadline = findViewById(R.id.editTextTaskDeadline);
         spinnerStatus = findViewById(R.id.spinnerTaskStatus);
+        spinnerReminder = findViewById(R.id.spinnerTaskReminder);
         buttonUpdateTask = findViewById(R.id.buttonUpdateTask);
     }
 
@@ -86,6 +97,17 @@ public class EditTaskActivity extends AppCompatActivity {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
+    }
+
+    private void setupReminderSpinner() {
+        String[] reminderOptions = {"No reminder", "At deadline", "30 min before"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                reminderOptions
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminder.setAdapter(adapter);
     }
 
     /**
@@ -190,6 +212,30 @@ public class EditTaskActivity extends AppCompatActivity {
         }
 
         spinnerStatus.setSelection(getStatusIndex(currentTask.getStatus()));
+        loadReminderSelection(deadline);
+    }
+
+    private void loadReminderSelection(@Nullable String deadline) {
+        TaskNotification notification = taskNotificationDao.getNotificationByTaskId(taskId);
+        if (notification == null || TextUtils.isEmpty(deadline)) {
+            spinnerReminder.setSelection(REMINDER_NONE);
+            return;
+        }
+
+        Long deadlineMillis = parseDeadlineMillis(deadline);
+        if (deadlineMillis == null) {
+            spinnerReminder.setSelection(REMINDER_NONE);
+            return;
+        }
+
+        long diffMillis = deadlineMillis - notification.getNotifyTimeMillis();
+        if (diffMillis == 0L) {
+            spinnerReminder.setSelection(REMINDER_AT_DEADLINE);
+        } else if (diffMillis == 30L * 60L * 1000L) {
+            spinnerReminder.setSelection(REMINDER_30_MIN_BEFORE);
+        } else {
+            spinnerReminder.setSelection(REMINDER_NONE);
+        }
     }
 
     private void updateTask() {
@@ -219,6 +265,7 @@ public class EditTaskActivity extends AppCompatActivity {
 
         int updatedRows = taskDao.updateTask(currentTask);
         if (updatedRows > 0) {
+            saveReminder(taskId, deadline);
             Toast.makeText(this, "Task updated", Toast.LENGTH_SHORT).show();
             finish();
             overridePendingTransition(0, R.anim.fade_out);
@@ -227,6 +274,46 @@ public class EditTaskActivity extends AppCompatActivity {
         }
     }
 
+    private void saveReminder(long taskId, @Nullable String deadline) {
+        Long reminderTimeMillis = getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
+        if (reminderTimeMillis == null) {
+            taskNotificationDao.deleteNotificationByTaskId(taskId);
+            return;
+        }
+        taskNotificationDao.upsertNotificationForTask(taskId, reminderTimeMillis);
+    }
+
+    @Nullable
+    private Long getReminderTimeMillis(@Nullable String deadline, int reminderOption) {
+        if (reminderOption == REMINDER_NONE || TextUtils.isEmpty(deadline)) {
+            return null;
+        }
+
+        Long deadlineMillis = parseDeadlineMillis(deadline);
+        if (deadlineMillis == null) {
+            return null;
+        }
+
+        if (reminderOption == REMINDER_AT_DEADLINE) {
+            return deadlineMillis;
+        }
+        if (reminderOption == REMINDER_30_MIN_BEFORE) {
+            return deadlineMillis - (30L * 60L * 1000L);
+        }
+        return null;
+    }
+
+    @Nullable
+    private Long parseDeadlineMillis(@Nullable String deadline) {
+        if (TextUtils.isEmpty(deadline)) {
+            return null;
+        }
+        try {
+            return deadlineFormat.parse(deadline).getTime();
+        } catch (ParseException | NullPointerException ignored) {
+            return null;
+        }
+    }
 
     private int getStatusIndex(int status) {
         if (status == TaskStatus.COMPLETED) return 1;

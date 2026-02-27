@@ -3,16 +3,16 @@ package com.example.studenttaskmanagement.model;
 public class TaskNotification {
     private long id;
     private long taskId;
-    private String notifyTime;
+    private long notifyTimeMillis;
     private int isSent;
 
     public TaskNotification() {
     }
 
-    public TaskNotification(long id, long taskId, String notifyTime, int isSent) {
+    public TaskNotification(long id, long taskId, long notifyTimeMillis, int isSent) {
         this.id = id;
         this.taskId = taskId;
-        this.notifyTime = notifyTime;
+        this.notifyTimeMillis = notifyTimeMillis;
         this.isSent = isSent;
     }
 
@@ -32,12 +32,12 @@ public class TaskNotification {
         this.taskId = taskId;
     }
 
-    public String getNotifyTime() {
-        return notifyTime;
+    public long getNotifyTimeMillis() {
+        return notifyTimeMillis;
     }
 
-    public void setNotifyTime(String notifyTime) {
-        this.notifyTime = notifyTime;
+    public void setNotifyTimeMillis(long notifyTimeMillis) {
+        this.notifyTimeMillis = notifyTimeMillis;
     }
 
     public int getIsSent() {
