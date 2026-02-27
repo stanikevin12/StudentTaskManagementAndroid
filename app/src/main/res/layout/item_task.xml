@@ -7,8 +7,8 @@
     android:layout_marginBottom="12dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="2dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="#E5E7EB">
+    app:strokeColor="#E5E7EB"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,28 +21,51 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Task Title"
+            android:textColor="#111827"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#111827"/>
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textTaskDeadline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Deadline: 2026-12-31"
             android:layout_marginTop="6dp"
-            android:textColor="#4B5563"/>
+            android:text="Deadline: 2026-12-31"
+            android:textColor="#4B5563" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/viewTaskPriorityIndicator"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@android:color/holo_green_dark" />
+
+            <TextView
+                android:id="@+id/textTaskPriority"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Priority: Low"
+                android:textColor="#374151"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <com.google.android.material.chip.Chip
             android:id="@+id/textTaskStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PENDING"
             android:layout_marginTop="10dp"
-            app:chipCornerRadius="14dp"
-            app:chipMinHeight="32dp"
+            android:text="PENDING"
+            android:textColor="#075985"
             app:chipBackgroundColor="#E0F2FE"
-            android:textColor="#075985"/>
+            app:chipCornerRadius="14dp"
+            app:chipMinHeight="32dp" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

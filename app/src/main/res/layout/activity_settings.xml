@@ -14,8 +14,8 @@
             android:id="@+id/toolbarSettings"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="Settings"
             app:navigationIcon="@android:drawable/ic_menu_revert"
+            app:title="Settings"
             app:titleCentered="false" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -35,46 +35,46 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Task reminders"
-                android:textStyle="bold"
-                android:textSize="18sp"
                 android:layout_marginTop="6dp"
-                android:layout_marginBottom="10dp"/>
+                android:layout_marginBottom="10dp"
+                android:text="Task reminders"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/switchTaskReminders"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:minHeight="48dp"
-                    android:textOn=""
-                    android:textOff=""
                     android:showText="false"
-                    app:showText="false"/>
+                    android:textOff=""
+                    android:textOn=""
+                    app:showText="false" />
 
                 <TextView
                     android:id="@+id/textReminderStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
                     android:text="OFF"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginStart="12dp"/>
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Reminder time"
-                android:textStyle="bold"
-                android:textSize="16sp"
                 android:layout_marginTop="18dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                android:text="Reminder time"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/spinnerDefaultLead"
@@ -82,7 +82,14 @@
                 android:layout_height="wrap_content"
                 android:minHeight="56dp"
                 android:padding="8dp"
-                android:spinnerMode="dropdown"/>
+                android:spinnerMode="dropdown" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Logout" />
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

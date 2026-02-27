@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.adapter.TaskAdapter;
+import com.example.studenttaskmanagement.auth.SessionManager;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -51,6 +52,7 @@ public class TasksActivity extends AppCompatActivity {
 
     private TaskAdapter taskAdapter;
     private TaskDao taskDao;
+    private SessionManager sessionManager;
     private final List<Task> allTasks = new ArrayList<>();
 
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
@@ -66,6 +68,8 @@ public class TasksActivity extends AppCompatActivity {
         setupRecycler();
         setupActions();
         setupSearch();
+
+        sessionManager = new SessionManager(this);
 
         showLoadingState("Loading tasks...");
         initDaoAndLoad();
@@ -118,7 +122,7 @@ public class TasksActivity extends AppCompatActivity {
         dbExecutor.execute(() -> {
             try {
                 taskDao = new TaskDao(getApplicationContext());
-                List<Task> tasks = taskDao.getAllTasks();
+                List<Task> tasks = taskDao.getAllTasks(sessionManager.getLoggedInUserId());
                 if (tasks == null) tasks = new ArrayList<>();
 
                 List<Task> finalTasks = tasks;
@@ -156,7 +160,7 @@ public class TasksActivity extends AppCompatActivity {
         dbExecutor.execute(() -> {
             List<Task> tasks;
             try {
-                tasks = taskDao.getAllTasks();
+                tasks = taskDao.getAllTasks(sessionManager.getLoggedInUserId());
                 if (tasks == null) tasks = new ArrayList<>();
             } catch (Throwable t) {
                 Log.e(TAG, "reloadTasksAsync failed", t);
@@ -256,8 +260,19 @@ public class TasksActivity extends AppCompatActivity {
         } else if (id == R.id.menuSettings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        } else if (id == R.id.menuLogout) {
+            logout();
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void logout() {
+        sessionManager.logout();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

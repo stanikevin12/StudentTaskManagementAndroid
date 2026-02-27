@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.example.studenttaskmanagement.R;
+import com.example.studenttaskmanagement.auth.SessionManager;
 import com.example.studenttaskmanagement.database.dao.StudySessionDao;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.notifications.NotificationStartup;
@@ -53,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView textForecastRisk;
 
     private DashboardViewModel dashboardViewModel;
+    private SessionManager sessionManager;
 
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -64,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         NotificationStartup.initialize(getApplicationContext());
+        sessionManager = new SessionManager(this);
 
         bindViews();
         setupToolbar();
@@ -124,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                         new StudySessionDao(getApplicationContext()),
                         new TaskDao(getApplicationContext())
                 );
-                DashboardUiState dashboardUiState = dashboardViewModel.loadWeeklySummary();
+                DashboardUiState dashboardUiState = dashboardViewModel.loadWeeklySummary(sessionManager.getLoggedInUserId());
 
                 mainHandler.post(() -> {
                     renderDashboardState(dashboardUiState);
@@ -165,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.menuSettings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        } else if (id == R.id.menuLogout) {
+            logout();
+            return true;
         } else if (id == R.id.menuAbout) {
             new AlertDialog.Builder(this)
                     .setTitle("Student Task Management")
@@ -175,6 +181,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void logout() {
+        sessionManager.logout();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void renderDashboardState(DashboardUiState state) {

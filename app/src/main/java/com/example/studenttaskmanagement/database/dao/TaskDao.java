@@ -55,6 +55,45 @@ public class TaskDao {
     }
 
     public List<Task> getAllTasks() {
+        return getAllTasks(0L);
+    }
+
+    public List<Task> getAllTasks(long userId) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        List<Task> taskList = new ArrayList<>();
+
+        String selection = null;
+        String[] selectionArgs = null;
+        if (userId > 0L) {
+            selection = DatabaseContract.Tasks.COLUMN_USER_ID + " = ?";
+            selectionArgs = new String[]{String.valueOf(userId)};
+        }
+
+        Cursor cursor = db.query(
+                DatabaseContract.Tasks.TABLE_NAME,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                DatabaseContract.Tasks._ID + " DESC"
+        );
+
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    taskList.add(mapCursorToTask(cursor));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return taskList;
+    }
+
+
+    public List<Task> getTasksOrderedByPriority() {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
         List<Task> taskList = new ArrayList<>();
 
@@ -65,7 +104,7 @@ public class TaskDao {
                 null,
                 null,
                 null,
-                DatabaseContract.Tasks._ID + " DESC"
+                DatabaseContract.Tasks.COLUMN_PRIORITY_ID + " ASC, " + DatabaseContract.Tasks._ID + " DESC"
         );
 
         if (cursor != null) {

@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "student_task_management.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     public AppDatabaseHelper(@NonNull Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -57,8 +57,9 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         return "CREATE TABLE IF NOT EXISTS " + DatabaseContract.Users.TABLE_NAME + " ("
                 + DatabaseContract.Users._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DatabaseContract.Users.COLUMN_NAME + " TEXT, "
-                + DatabaseContract.Users.COLUMN_EMAIL + " TEXT, "
-                + DatabaseContract.Users.COLUMN_CREATED_AT + " INTEGER" // <-- was TEXT
+                + DatabaseContract.Users.COLUMN_EMAIL + " TEXT UNIQUE NOT NULL, "
+                + DatabaseContract.Users.COLUMN_PASSWORD_HASH + " TEXT NOT NULL, "
+                + DatabaseContract.Users.COLUMN_CREATED_AT + " INTEGER"
                 + ")";
     }
 
@@ -142,7 +143,8 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
         values.put(DatabaseContract.Users._ID, 1);
         values.put(DatabaseContract.Users.COLUMN_NAME, "Default Student");
         values.put(DatabaseContract.Users.COLUMN_EMAIL, "student@example.com");
-        values.put(DatabaseContract.Users.COLUMN_CREATED_AT, System.currentTimeMillis()); // <-- still long, now INTEGER
+        values.put(DatabaseContract.Users.COLUMN_PASSWORD_HASH, "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8");
+        values.put(DatabaseContract.Users.COLUMN_CREATED_AT, System.currentTimeMillis());
         db.insertWithOnConflict(DatabaseContract.Users.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 

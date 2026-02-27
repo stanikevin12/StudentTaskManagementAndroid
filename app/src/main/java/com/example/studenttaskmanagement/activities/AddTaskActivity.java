@@ -15,8 +15,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
+import com.example.studenttaskmanagement.auth.SessionManager;
+import com.example.studenttaskmanagement.database.dao.PriorityDao;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
+import com.example.studenttaskmanagement.model.Priority;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.notifications.NotificationPreferences;
 import com.example.studenttaskmanagement.model.TaskStatus;
@@ -28,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.List;
 
 /**
  * Activity responsible for collecting task details from the user
@@ -37,8 +41,6 @@ public class AddTaskActivity extends AppCompatActivity {
 
     private static final int DEFAULT_STATUS = TaskStatus.PENDING;
     private static final long DEFAULT_CATEGORY_ID = 1L;
-    private static final long DEFAULT_PRIORITY_ID = 1L;
-    private static final long DEFAULT_USER_ID = 1L;
 
     private static final int REMINDER_NONE = 0;
     private static final int REMINDER_AT_DEADLINE = 1;
@@ -48,11 +50,15 @@ public class AddTaskActivity extends AppCompatActivity {
     private TextInputEditText editTextTitle;
     private TextInputEditText editTextDescription;
     private TextInputEditText editTextDeadline;
+    private Spinner spinnerPriority;
     private Spinner spinnerReminder;
     private Button buttonSaveTask;
 
     private TaskDao taskDao;
+    private PriorityDao priorityDao;
     private TaskNotificationDao taskNotificationDao;
+    private SessionManager sessionManager;
+    private List<Priority> priorities;
 
     // Deadline picker state
     private final Calendar deadlineCal = Calendar.getInstance();
@@ -74,9 +80,12 @@ public class AddTaskActivity extends AppCompatActivity {
         }
 
         taskDao = new TaskDao(this);
+        priorityDao = new PriorityDao(this);
         taskNotificationDao = new TaskNotificationDao(this);
+        sessionManager = new SessionManager(this);
 
         bindViews();
+        setupPrioritySpinner();
         setupReminderSpinner();
         setupDeadlinePicker();
         setupActions();
@@ -86,8 +95,32 @@ public class AddTaskActivity extends AppCompatActivity {
         editTextTitle = findViewById(R.id.editTextTaskTitle);
         editTextDescription = findViewById(R.id.editTextTaskDescription);
         editTextDeadline = findViewById(R.id.editTextTaskDeadline);
+        spinnerPriority = findViewById(R.id.spinnerTaskPriority);
         spinnerReminder = findViewById(R.id.spinnerTaskReminder);
         buttonSaveTask = findViewById(R.id.buttonSaveTask);
+    }
+
+
+    private void setupPrioritySpinner() {
+        priorities = priorityDao.getAllPriorities();
+
+        String[] labels;
+        if (priorities == null || priorities.isEmpty()) {
+            labels = new String[]{"Low"};
+        } else {
+            labels = new String[priorities.size()];
+            for (int i = 0; i < priorities.size(); i++) {
+                labels[i] = priorities.get(i).getLabel();
+            }
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                labels
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerPriority.setAdapter(adapter);
     }
 
     private void setupReminderSpinner() {
@@ -193,8 +226,9 @@ public class AddTaskActivity extends AppCompatActivity {
         task.setDeadline(deadline);
         task.setStatus(DEFAULT_STATUS);
         task.setCategoryId(DEFAULT_CATEGORY_ID);
-        task.setPriorityId(DEFAULT_PRIORITY_ID);
-        task.setUserId(DEFAULT_USER_ID);
+        task.setPriorityId(getSelectedPriorityId());
+        long currentUserId = sessionManager.getLoggedInUserId();
+        task.setUserId(currentUserId > 0 ? currentUserId : 1L);
 
         long insertedId = taskDao.insertTask(task);
         if (insertedId != -1) {
@@ -252,6 +286,18 @@ public class AddTaskActivity extends AppCompatActivity {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+
+
+    private long getSelectedPriorityId() {
+        if (priorities == null || priorities.isEmpty()) {
+            return 1L;
+        }
+
+        int pos = spinnerPriority.getSelectedItemPosition();
+        if (pos < 0 || pos >= priorities.size()) return priorities.get(0).getId();
+        return priorities.get(pos).getId();
     }
 
 
