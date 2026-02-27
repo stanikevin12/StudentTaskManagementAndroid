@@ -110,6 +110,9 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.menuAddTask) {
                 openAddTask();
                 return true;
+            } else if (id == R.id.menuSettings) {
+                openSettings();
+                return true;
             } else if (id == R.id.menuAbout) {
                 showAboutDialog();
                 return true;
@@ -280,6 +283,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void openAddTask() {
         startActivity(new Intent(MainActivity.this, AddTaskActivity.class));
+    }
+
+    private void openSettings() {
+        startActivity(new Intent(MainActivity.this, SettingsActivity.class));
     }
 
     private void showAboutDialog() {

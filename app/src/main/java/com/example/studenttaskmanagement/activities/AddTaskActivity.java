@@ -18,6 +18,7 @@ import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.notifications.NotificationPreferences;
 import com.example.studenttaskmanagement.model.TaskStatus;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -41,6 +42,7 @@ public class AddTaskActivity extends AppCompatActivity {
     private static final int REMINDER_NONE = 0;
     private static final int REMINDER_AT_DEADLINE = 1;
     private static final int REMINDER_30_MIN_BEFORE = 2;
+    private static final int REMINDER_60_MIN_BEFORE = 3;
 
     private TextInputEditText editTextTitle;
     private TextInputEditText editTextDescription;
@@ -88,7 +90,7 @@ public class AddTaskActivity extends AppCompatActivity {
     }
 
     private void setupReminderSpinner() {
-        String[] reminderOptions = {"No reminder", "At deadline", "30 min before"};
+        String[] reminderOptions = {"No reminder", "At deadline", "30 min before", "60 min before"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -96,6 +98,12 @@ public class AddTaskActivity extends AppCompatActivity {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerReminder.setAdapter(adapter);
+
+        if (NotificationPreferences.areRemindersEnabled(this)) {
+            spinnerReminder.setSelection(defaultReminderOptionFromSettings());
+        } else {
+            spinnerReminder.setSelection(REMINDER_NONE);
+        }
     }
 
     private void setupActions() {
@@ -199,6 +207,11 @@ public class AddTaskActivity extends AppCompatActivity {
     }
 
     private void saveReminder(long taskId, @Nullable String deadline) {
+        if (!NotificationPreferences.areRemindersEnabled(this)) {
+            taskNotificationDao.deleteNotificationByTaskId(taskId);
+            return;
+        }
+
         Long reminderTimeMillis = getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
         if (reminderTimeMillis == null) {
             taskNotificationDao.deleteNotificationByTaskId(taskId);
@@ -221,9 +234,24 @@ public class AddTaskActivity extends AppCompatActivity {
             if (reminderOption == REMINDER_30_MIN_BEFORE) {
                 return deadlineMillis - (30L * 60L * 1000L);
             }
+            if (reminderOption == REMINDER_60_MIN_BEFORE) {
+                return deadlineMillis - (60L * 60L * 1000L);
+            }
         } catch (ParseException | NullPointerException ignored) {
         }
         return null;
+    }
+
+
+    private int defaultReminderOptionFromSettings() {
+        int leadMinutes = NotificationPreferences.getDefaultLeadTimeMinutes(this);
+        if (leadMinutes == NotificationPreferences.LEAD_TIME_AT_DEADLINE) {
+            return REMINDER_AT_DEADLINE;
+        }
+        if (leadMinutes == NotificationPreferences.LEAD_TIME_60_MIN) {
+            return REMINDER_60_MIN_BEFORE;
+        }
+        return REMINDER_30_MIN_BEFORE;
     }
 
     private void hideKeyboard() {

@@ -31,6 +31,10 @@ public class TaskReminderWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
+        if (!NotificationPreferences.areRemindersEnabled(context)) {
+            return Result.success();
+        }
+
         long nowMillis = System.currentTimeMillis();
 
         TaskNotificationDao notificationDao = new TaskNotificationDao(context);

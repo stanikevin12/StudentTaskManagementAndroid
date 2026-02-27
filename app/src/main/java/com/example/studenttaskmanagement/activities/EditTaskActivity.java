@@ -19,6 +19,7 @@ import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.model.TaskNotification;
 import com.example.studenttaskmanagement.model.TaskStatus;
+import com.example.studenttaskmanagement.notifications.NotificationPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -36,6 +37,7 @@ public class EditTaskActivity extends AppCompatActivity {
     private static final int REMINDER_NONE = 0;
     private static final int REMINDER_AT_DEADLINE = 1;
     private static final int REMINDER_30_MIN_BEFORE = 2;
+    private static final int REMINDER_60_MIN_BEFORE = 3;
 
     private TextInputEditText editTextTitle;
     private TextInputEditText editTextDescription;
@@ -100,7 +102,7 @@ public class EditTaskActivity extends AppCompatActivity {
     }
 
     private void setupReminderSpinner() {
-        String[] reminderOptions = {"No reminder", "At deadline", "30 min before"};
+        String[] reminderOptions = {"No reminder", "At deadline", "30 min before", "60 min before"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -233,6 +235,8 @@ public class EditTaskActivity extends AppCompatActivity {
             spinnerReminder.setSelection(REMINDER_AT_DEADLINE);
         } else if (diffMillis == 30L * 60L * 1000L) {
             spinnerReminder.setSelection(REMINDER_30_MIN_BEFORE);
+        } else if (diffMillis == 60L * 60L * 1000L) {
+            spinnerReminder.setSelection(REMINDER_60_MIN_BEFORE);
         } else {
             spinnerReminder.setSelection(REMINDER_NONE);
         }
@@ -275,6 +279,11 @@ public class EditTaskActivity extends AppCompatActivity {
     }
 
     private void saveReminder(long taskId, @Nullable String deadline) {
+        if (!NotificationPreferences.areRemindersEnabled(this)) {
+            taskNotificationDao.deleteNotificationByTaskId(taskId);
+            return;
+        }
+
         Long reminderTimeMillis = getReminderTimeMillis(deadline, spinnerReminder.getSelectedItemPosition());
         if (reminderTimeMillis == null) {
             taskNotificationDao.deleteNotificationByTaskId(taskId);
@@ -299,6 +308,9 @@ public class EditTaskActivity extends AppCompatActivity {
         }
         if (reminderOption == REMINDER_30_MIN_BEFORE) {
             return deadlineMillis - (30L * 60L * 1000L);
+        }
+        if (reminderOption == REMINDER_60_MIN_BEFORE) {
+            return deadlineMillis - (60L * 60L * 1000L);
         }
         return null;
     }
