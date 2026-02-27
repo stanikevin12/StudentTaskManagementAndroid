@@ -60,4 +60,7 @@ public final class NotificationStartup {
                 reminderWork
         );
     }
+    private static void cancelPeriodicReminderWorker(Context context) {
+        WorkManager.getInstance(context).cancelUniqueWork(TASK_REMINDER_WORK_NAME);
+    }
 }
