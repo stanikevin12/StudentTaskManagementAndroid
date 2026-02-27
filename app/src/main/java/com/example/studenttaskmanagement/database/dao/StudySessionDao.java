@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.example.studenttaskmanagement.database.AppDatabaseHelper;
 import com.example.studenttaskmanagement.database.DatabaseContract;
 import com.example.studenttaskmanagement.model.StudySession;
+import com.example.studenttaskmanagement.utils.WeekTimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,6 +144,124 @@ public class StudySessionDao {
         return sessions;
     }
 
+    public List<StudySession> getSessionsInCurrentWeek() {
+        WeekTimeUtils.WeekRange weekRange = WeekTimeUtils.getCurrentWeekRange();
+        return getSessionsInRange(weekRange.getStartMillis(), weekRange.getEndMillis());
+    }
+
+    public List<StudySession> getSessionsInPreviousWeek() {
+        WeekTimeUtils.WeekRange weekRange = WeekTimeUtils.getPreviousWeekRange();
+        return getSessionsInRange(weekRange.getStartMillis(), weekRange.getEndMillis());
+    }
+
+    public List<StudySession> getSessionsInRange(long startMillisInclusive, long endMillisExclusive) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        List<StudySession> sessions = new ArrayList<>();
+
+        Cursor cursor = db.query(
+                DatabaseContract.StudySessions.TABLE_NAME,
+                null,
+                DatabaseContract.StudySessions.COLUMN_START_TIME + " >= ? AND "
+                        + DatabaseContract.StudySessions.COLUMN_START_TIME + " < ?",
+                new String[]{String.valueOf(startMillisInclusive), String.valueOf(endMillisExclusive)},
+                null,
+                null,
+                DatabaseContract.StudySessions.COLUMN_START_TIME + " DESC"
+        );
+
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    sessions.add(mapCursorToStudySession(cursor));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return sessions;
+    }
+
+    public long getTotalFocusedMinutes(long startMillisInclusive, long endMillisExclusive) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COALESCE(SUM(" + DatabaseContract.StudySessions.COLUMN_DURATION + "),0)"
+                        + " FROM " + DatabaseContract.StudySessions.TABLE_NAME
+                        + " WHERE " + DatabaseContract.StudySessions.COLUMN_START_TIME + " >= ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_START_TIME + " < ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_END_TIME + " > 0",
+                new String[]{String.valueOf(startMillisInclusive), String.valueOf(endMillisExclusive)}
+        );
+
+        long totalDurationMillis = 0L;
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    totalDurationMillis = cursor.getLong(0);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return totalDurationMillis / (60L * 1000L);
+    }
+
+    public double getAverageSessionDurationMinutes(long startMillisInclusive, long endMillisExclusive) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT AVG(" + DatabaseContract.StudySessions.COLUMN_DURATION + ")"
+                        + " FROM " + DatabaseContract.StudySessions.TABLE_NAME
+                        + " WHERE " + DatabaseContract.StudySessions.COLUMN_START_TIME + " >= ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_START_TIME + " < ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_END_TIME + " > 0",
+                new String[]{String.valueOf(startMillisInclusive), String.valueOf(endMillisExclusive)}
+        );
+
+        double averageDurationMillis = 0D;
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst() && !cursor.isNull(0)) {
+                    averageDurationMillis = cursor.getDouble(0);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return averageDurationMillis / (60D * 1000D);
+    }
+
+    public SessionPlanCompletion getPlannedVsCompletedSessionCount(long startMillisInclusive, long endMillisExclusive) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*), SUM(CASE WHEN " + DatabaseContract.StudySessions.COLUMN_END_TIME + " > 0 THEN 1 ELSE 0 END)"
+                        + " FROM " + DatabaseContract.StudySessions.TABLE_NAME
+                        + " WHERE " + DatabaseContract.StudySessions.COLUMN_START_TIME + " >= ?"
+                        + " AND " + DatabaseContract.StudySessions.COLUMN_START_TIME + " < ?",
+                new String[]{String.valueOf(startMillisInclusive), String.valueOf(endMillisExclusive)}
+        );
+
+        int planned = 0;
+        int completed = 0;
+
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    planned = cursor.getInt(0);
+                    completed = cursor.isNull(1) ? 0 : cursor.getInt(1);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return new SessionPlanCompletion(planned, completed);
+    }
+
 
     /**
      * Returns how many completed study sessions exist for a task.
@@ -243,5 +362,23 @@ public class StudySessionDao {
         session.setDuration(durationIndex >= 0 && !cursor.isNull(durationIndex) ? cursor.getLong(durationIndex) : 0L);
 
         return session;
+    }
+
+    public static final class SessionPlanCompletion {
+        private final int plannedCount;
+        private final int completedCount;
+
+        public SessionPlanCompletion(int plannedCount, int completedCount) {
+            this.plannedCount = plannedCount;
+            this.completedCount = completedCount;
+        }
+
+        public int getPlannedCount() {
+            return plannedCount;
+        }
+
+        public int getCompletedCount() {
+            return completedCount;
+        }
     }
 }

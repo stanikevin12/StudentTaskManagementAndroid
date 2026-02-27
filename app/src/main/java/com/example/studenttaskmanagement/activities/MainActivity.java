@@ -18,15 +18,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.adapter.TaskAdapter;
+import com.example.studenttaskmanagement.database.dao.StudySessionDao;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
 import com.example.studenttaskmanagement.notifications.NotificationStartup;
+import com.example.studenttaskmanagement.presentation.dashboard.DashboardKpiCard;
+import com.example.studenttaskmanagement.presentation.dashboard.DashboardUiState;
+import com.example.studenttaskmanagement.presentation.dashboard.DashboardViewModel;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -53,10 +58,19 @@ public class MainActivity extends AppCompatActivity {
     private TextView textEmptySubtitle;
     private MaterialButton buttonCreateFirstTask;
 
+    private ProgressBar progressDashboard;
+    private TextView textDashboardState;
+    private LinearLayout layoutDashboardCards;
+    private TextView[] dashboardLabelViews;
+    private TextView[] dashboardValueViews;
+    private TextView[] dashboardTrendViews;
+
     private ExtendedFloatingActionButton fabAddTask;
 
     private TaskAdapter taskAdapter;
     private TaskDao taskDao;
+    private StudySessionDao studySessionDao;
+    private DashboardViewModel dashboardViewModel;
 
     private final List<Task> allTasks = new ArrayList<>();
 
@@ -77,8 +91,8 @@ public class MainActivity extends AppCompatActivity {
         setupActions();
         setupSearch();
 
-        // Always show something immediately (never blank/black)
         showLoadingState("Loading tasks...");
+        showDashboardLoading("Loading dashboard...");
 
         initDaoAndLoad();
     }
@@ -96,23 +110,45 @@ public class MainActivity extends AppCompatActivity {
         textEmptySubtitle = findViewById(R.id.textEmptySubtitle);
         buttonCreateFirstTask = findViewById(R.id.buttonCreateFirstTask);
 
+        progressDashboard = findViewById(R.id.progressDashboard);
+        textDashboardState = findViewById(R.id.textDashboardState);
+        layoutDashboardCards = findViewById(R.id.layoutDashboardCards);
+
+        dashboardLabelViews = new TextView[]{
+                findViewById(R.id.textCard1Label),
+                findViewById(R.id.textCard2Label),
+                findViewById(R.id.textCard3Label),
+                findViewById(R.id.textCard4Label)
+        };
+
+        dashboardValueViews = new TextView[]{
+                findViewById(R.id.textCard1Value),
+                findViewById(R.id.textCard2Value),
+                findViewById(R.id.textCard3Value),
+                findViewById(R.id.textCard4Value)
+        };
+
+        dashboardTrendViews = new TextView[]{
+                findViewById(R.id.textCard1Trend),
+                findViewById(R.id.textCard2Trend),
+                findViewById(R.id.textCard3Trend),
+                findViewById(R.id.textCard4Trend)
+        };
+
         fabAddTask = findViewById(R.id.fabAddTask);
     }
 
     private void setupToolbar() {
         setSupportActionBar(toolbarMain);
         toolbarMain.setTitle("My Tasks");
-        // IMPORTANT: do NOT inflate menu here; AppCompat will manage it via onCreateOptionsMenu()
     }
 
-    // ✅ This is the correct way when using setSupportActionBar(toolbar)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
-    // ✅ Handle menu clicks here
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -146,14 +182,18 @@ public class MainActivity extends AppCompatActivity {
         if (editTextSearch == null) return;
 
         editTextSearch.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 applyFilter(s == null ? "" : s.toString());
             }
 
-            @Override public void afterTextChanged(Editable s) { }
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -161,10 +201,13 @@ public class MainActivity extends AppCompatActivity {
         dbExecutor.execute(() -> {
             try {
                 taskDao = new TaskDao(getApplicationContext());
-                Log.d(TAG, "TaskDao initialized");
+                studySessionDao = new StudySessionDao(getApplicationContext());
+                dashboardViewModel = new DashboardViewModel(studySessionDao);
 
                 List<Task> tasks = taskDao.getAllTasks();
                 if (tasks == null) tasks = new ArrayList<>();
+
+                DashboardUiState dashboardUiState = dashboardViewModel.loadWeeklySummary();
 
                 List<Task> finalTasks = tasks;
                 mainHandler.post(() -> {
@@ -176,9 +219,8 @@ public class MainActivity extends AppCompatActivity {
                             : "";
 
                     applyFilter(q);
+                    renderDashboardState(dashboardUiState);
                     setDebug("Loaded tasks: " + allTasks.size());
-
-                    // force toolbar to refresh menu once activity is ready (helps on some devices)
                     invalidateOptionsMenu();
                 });
 
@@ -190,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
                             "Database error",
                             "Could not load tasks. You can still try adding a new task."
                     );
+                    showDashboardError("Could not load weekly dashboard.");
                     invalidateOptionsMenu();
                 });
             }
@@ -199,30 +242,34 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh when returning from Add/Edit
-        reloadTasksAsync();
+        reloadTasksAndDashboardAsync();
     }
 
-    private void reloadTasksAsync() {
-        if (taskDao == null) {
-            // If DAO not ready yet, init/load again
+    private void reloadTasksAndDashboardAsync() {
+        if (taskDao == null || dashboardViewModel == null) {
             showLoadingState("Loading tasks...");
+            showDashboardLoading("Loading dashboard...");
             initDaoAndLoad();
             return;
         }
 
         showLoadingState("Refreshing...");
+        showDashboardLoading("Refreshing dashboard...");
         dbExecutor.execute(() -> {
             List<Task> tasks;
+            DashboardUiState dashboardUiState;
             try {
                 tasks = taskDao.getAllTasks();
                 if (tasks == null) tasks = new ArrayList<>();
+                dashboardUiState = dashboardViewModel.loadWeeklySummary();
             } catch (Throwable t) {
-                Log.e(TAG, "reloadTasksAsync failed", t);
+                Log.e(TAG, "reloadTasksAndDashboardAsync failed", t);
                 tasks = new ArrayList<>();
+                dashboardUiState = DashboardUiState.error("Could not refresh weekly dashboard.");
             }
 
             List<Task> finalTasks = tasks;
+            DashboardUiState finalDashboardUiState = dashboardUiState;
             mainHandler.post(() -> {
                 allTasks.clear();
                 allTasks.addAll(finalTasks);
@@ -232,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
                         : "";
 
                 applyFilter(q);
+                renderDashboardState(finalDashboardUiState);
                 setDebug("Refreshed tasks: " + allTasks.size());
             });
         });
@@ -266,10 +314,94 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void renderDashboardState(DashboardUiState state) {
+        if (state == null) {
+            showDashboardError("Could not load weekly dashboard.");
+            return;
+        }
+
+        switch (state.getStatus()) {
+            case LOADING:
+                showDashboardLoading(state.getMessage());
+                break;
+            case EMPTY:
+                showDashboardEmpty(state.getMessage());
+                break;
+            case ERROR:
+                showDashboardError(state.getMessage());
+                break;
+            case CONTENT:
+            default:
+                showDashboardContent(state.getCards());
+                break;
+        }
+    }
+
+    private void showDashboardLoading(String message) {
+        if (textDashboardState != null) {
+            textDashboardState.setVisibility(View.VISIBLE);
+            textDashboardState.setText(message == null ? "Loading dashboard..." : message);
+        }
+        if (progressDashboard != null) progressDashboard.setVisibility(View.VISIBLE);
+        if (layoutDashboardCards != null) layoutDashboardCards.setVisibility(View.GONE);
+    }
+
+    private void showDashboardEmpty(String message) {
+        if (textDashboardState != null) {
+            textDashboardState.setVisibility(View.VISIBLE);
+            textDashboardState.setText(message == null ? "No study sessions yet this week." : message);
+        }
+        if (progressDashboard != null) progressDashboard.setVisibility(View.GONE);
+        if (layoutDashboardCards != null) layoutDashboardCards.setVisibility(View.GONE);
+    }
+
+    private void showDashboardError(String message) {
+        if (textDashboardState != null) {
+            textDashboardState.setVisibility(View.VISIBLE);
+            textDashboardState.setText(message == null ? "Could not load weekly dashboard." : message);
+        }
+        if (progressDashboard != null) progressDashboard.setVisibility(View.GONE);
+        if (layoutDashboardCards != null) layoutDashboardCards.setVisibility(View.GONE);
+    }
+
+    private void showDashboardContent(List<DashboardKpiCard> cards) {
+        if (cards == null || cards.isEmpty()) {
+            showDashboardEmpty("No study sessions yet this week.");
+            return;
+        }
+
+        if (textDashboardState != null) textDashboardState.setVisibility(View.GONE);
+        if (progressDashboard != null) progressDashboard.setVisibility(View.GONE);
+        if (layoutDashboardCards != null) layoutDashboardCards.setVisibility(View.VISIBLE);
+
+        int count = Math.min(cards.size(), dashboardLabelViews.length);
+        for (int i = 0; i < count; i++) {
+            DashboardKpiCard card = cards.get(i);
+            dashboardLabelViews[i].setText(card.getLabel());
+            dashboardValueViews[i].setText(card.getValue());
+            dashboardTrendViews[i].setText(trendArrow(card.getTrend()) + " " + card.getDeltaText());
+            dashboardTrendViews[i].setTextColor(getTrendColor(card.getTrend()));
+        }
+    }
+
+    private int getTrendColor(DashboardKpiCard.Trend trend) {
+        if (trend == DashboardKpiCard.Trend.UP) {
+            return ContextCompat.getColor(this, android.R.color.holo_green_dark);
+        } else if (trend == DashboardKpiCard.Trend.DOWN) {
+            return ContextCompat.getColor(this, android.R.color.holo_red_dark);
+        }
+        return ContextCompat.getColor(this, android.R.color.darker_gray);
+    }
+
+    private String trendArrow(DashboardKpiCard.Trend trend) {
+        if (trend == DashboardKpiCard.Trend.UP) return "↑";
+        if (trend == DashboardKpiCard.Trend.DOWN) return "↓";
+        return "→";
+    }
+
     private void showLoadingState(String message) {
         if (progressLoading != null) progressLoading.setVisibility(View.VISIBLE);
 
-        // Show empty container with a loading message so the screen is NEVER blank
         if (layoutEmptyState != null) layoutEmptyState.setVisibility(View.VISIBLE);
         if (textEmptyTitle != null) textEmptyTitle.setText(message);
         if (textEmptySubtitle != null) textEmptySubtitle.setText("Please wait...");
