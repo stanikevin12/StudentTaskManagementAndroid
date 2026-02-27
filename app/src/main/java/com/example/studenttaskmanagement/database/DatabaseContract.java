@@ -15,6 +15,7 @@ public final class DatabaseContract {
         public static final String TABLE_NAME = "users";
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_EMAIL = "email";
+        public static final String COLUMN_PASSWORD_HASH = "password_hash";
         public static final String COLUMN_CREATED_AT = "created_at";
 
         private Users() {}
