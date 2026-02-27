@@ -28,6 +28,7 @@
         <activity android:name=".activities.AddTaskActivity" />
         <activity android:name=".activities.EditTaskActivity" />
         <activity android:name=".activities.TaskDetailActivity" />
+        <activity android:name=".activities.TasksActivity" />
         <activity android:name=".activities.SettingsActivity" />
 
         <!-- STUDY SESSION -->
