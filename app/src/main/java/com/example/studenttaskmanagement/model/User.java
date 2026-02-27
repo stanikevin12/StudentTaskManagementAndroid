@@ -4,15 +4,17 @@ public class User {
     private long id;
     private String name;
     private String email;
-    private String createdAt;
+    private String passwordHash;
+    private long createdAt;
 
     public User() {
     }
 
-    public User(long id, String name, String email, String createdAt) {
+    public User(long id, String name, String email, String passwordHash, long createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
+        this.passwordHash = passwordHash;
         this.createdAt = createdAt;
     }
 
@@ -40,11 +42,19 @@ public class User {
         this.email = email;
     }
 
-    public String getCreatedAt() {
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
     }
 }

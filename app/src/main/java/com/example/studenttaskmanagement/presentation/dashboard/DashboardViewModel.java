@@ -25,8 +25,8 @@ public class DashboardViewModel {
         this.taskDao = taskDao;
     }
 
-    public DashboardUiState loadWeeklySummary() {
-        ProjectCompletionForecast forecast = buildProjectForecast();
+    public DashboardUiState loadWeeklySummary(long userId) {
+        ProjectCompletionForecast forecast = buildProjectForecast(userId);
 
         WeekTimeUtils.WeekRange currentWeek = WeekTimeUtils.getCurrentWeekRange();
         WeekTimeUtils.WeekRange previousWeek = WeekTimeUtils.getPreviousWeekRange();
@@ -87,8 +87,8 @@ public class DashboardViewModel {
         return DashboardUiState.content(cards, forecast);
     }
 
-    private ProjectCompletionForecast buildProjectForecast() {
-        List<Task> tasks = taskDao.getAllTasks();
+    private ProjectCompletionForecast buildProjectForecast(long userId) {
+        List<Task> tasks = taskDao.getAllTasks(userId);
         if (tasks == null) tasks = new ArrayList<>();
 
         int total = tasks.size();

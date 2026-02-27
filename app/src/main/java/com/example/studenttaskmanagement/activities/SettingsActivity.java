@@ -2,6 +2,7 @@ package com.example.studenttaskmanagement.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -19,9 +20,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.studenttaskmanagement.R;
+import com.example.studenttaskmanagement.auth.SessionManager;
 import com.example.studenttaskmanagement.notifications.NotificationPreferences;
 import com.example.studenttaskmanagement.notifications.NotificationStartup;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -29,6 +32,7 @@ public class SettingsActivity extends AppCompatActivity {
     private MaterialSwitch switchTaskReminders;
     private Spinner spinnerDefaultLead;
     private TextView textReminderStatus;
+    private MaterialButton buttonLogout;
 
     private boolean isBinding = false;
 
@@ -64,6 +68,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchTaskReminders = findViewById(R.id.switchTaskReminders);
         spinnerDefaultLead = findViewById(R.id.spinnerDefaultLead);
         textReminderStatus = findViewById(R.id.textReminderStatus);
+        buttonLogout = findViewById(R.id.buttonLogout);
 
         setupLeadTimeSpinner();
         bindCurrentValues();
@@ -121,6 +126,15 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) { }
+        });
+
+
+        buttonLogout.setOnClickListener(v -> {
+            new SessionManager(this).logout();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 

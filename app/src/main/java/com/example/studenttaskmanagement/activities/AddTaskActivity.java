@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.studenttaskmanagement.R;
+import com.example.studenttaskmanagement.auth.SessionManager;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.database.dao.TaskNotificationDao;
 import com.example.studenttaskmanagement.model.Task;
@@ -38,7 +39,6 @@ public class AddTaskActivity extends AppCompatActivity {
     private static final int DEFAULT_STATUS = TaskStatus.PENDING;
     private static final long DEFAULT_CATEGORY_ID = 1L;
     private static final long DEFAULT_PRIORITY_ID = 1L;
-    private static final long DEFAULT_USER_ID = 1L;
 
     private static final int REMINDER_NONE = 0;
     private static final int REMINDER_AT_DEADLINE = 1;
@@ -53,6 +53,7 @@ public class AddTaskActivity extends AppCompatActivity {
 
     private TaskDao taskDao;
     private TaskNotificationDao taskNotificationDao;
+    private SessionManager sessionManager;
 
     // Deadline picker state
     private final Calendar deadlineCal = Calendar.getInstance();
@@ -75,6 +76,7 @@ public class AddTaskActivity extends AppCompatActivity {
 
         taskDao = new TaskDao(this);
         taskNotificationDao = new TaskNotificationDao(this);
+        sessionManager = new SessionManager(this);
 
         bindViews();
         setupReminderSpinner();
@@ -194,7 +196,8 @@ public class AddTaskActivity extends AppCompatActivity {
         task.setStatus(DEFAULT_STATUS);
         task.setCategoryId(DEFAULT_CATEGORY_ID);
         task.setPriorityId(DEFAULT_PRIORITY_ID);
-        task.setUserId(DEFAULT_USER_ID);
+        long currentUserId = sessionManager.getLoggedInUserId();
+        task.setUserId(currentUserId > 0 ? currentUserId : 1L);
 
         long insertedId = taskDao.insertTask(task);
         if (insertedId != -1) {
