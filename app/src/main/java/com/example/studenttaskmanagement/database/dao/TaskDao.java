@@ -97,11 +97,18 @@ public class TaskDao {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
         List<Task> taskList = new ArrayList<>();
 
+        String selection = null;
+        String[] selectionArgs = null;
+        if (userId > 0L) {
+            selection = DatabaseContract.Tasks.COLUMN_USER_ID + " = ?";
+            selectionArgs = new String[]{String.valueOf(userId)};
+        }
+
         Cursor cursor = db.query(
                 DatabaseContract.Tasks.TABLE_NAME,
                 null,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 null,
                 null,
                 DatabaseContract.Tasks.COLUMN_PRIORITY_ID + " ASC, " + DatabaseContract.Tasks._ID + " DESC"
