@@ -35,6 +35,14 @@ public final class NotificationStartup {
         }
     }
 
+    public static void updateReminderWorkerSchedule(Context context) {
+        if (NotificationPreferences.areRemindersEnabled(context)) {
+            schedulePeriodicReminderWorker(context);
+        } else {
+            cancelPeriodicReminderWorker(context);
+        }
+    }
+
     private static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
 
