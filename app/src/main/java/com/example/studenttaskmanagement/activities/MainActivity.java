@@ -168,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.menuSettings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        } else if (id == R.id.menuLogout) {
+            logout();
+            return true;
         } else if (id == R.id.menuAbout) {
             new AlertDialog.Builder(this)
                     .setTitle("Student Task Management")
@@ -178,6 +181,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void logout() {
+        sessionManager.logout();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void renderDashboardState(DashboardUiState state) {
