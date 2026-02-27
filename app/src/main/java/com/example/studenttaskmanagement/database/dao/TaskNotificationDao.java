@@ -9,6 +9,9 @@ import com.example.studenttaskmanagement.database.AppDatabaseHelper;
 import com.example.studenttaskmanagement.database.DatabaseContract;
 import com.example.studenttaskmanagement.model.TaskNotification;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Data Access Object for CRUD operations on the notifications table.
  * v1 reminder model: one notification row per task.
@@ -82,6 +85,47 @@ public class TaskNotificationDao {
                 DatabaseContract.Notifications.TABLE_NAME,
                 DatabaseContract.Notifications.COLUMN_TASK_ID + " = ?",
                 new String[]{String.valueOf(taskId)}
+        );
+    }
+
+    public List<TaskNotification> getPendingNotifications(long nowMillis) {
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        List<TaskNotification> notifications = new ArrayList<>();
+
+        Cursor cursor = db.query(
+                DatabaseContract.Notifications.TABLE_NAME,
+                null,
+                DatabaseContract.Notifications.COLUMN_IS_SENT + " = 0 AND "
+                        + DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " <= ?",
+                new String[]{String.valueOf(nowMillis)},
+                null,
+                null,
+                DatabaseContract.Notifications.COLUMN_NOTIFY_TIME + " ASC"
+        );
+
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    notifications.add(mapCursorToNotification(cursor));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return notifications;
+    }
+
+    public int markNotificationAsSent(long notificationId) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseContract.Notifications.COLUMN_IS_SENT, 1);
+
+        return db.update(
+                DatabaseContract.Notifications.TABLE_NAME,
+                values,
+                DatabaseContract.Notifications._ID + " = ?",
+                new String[]{String.valueOf(notificationId)}
         );
     }
 

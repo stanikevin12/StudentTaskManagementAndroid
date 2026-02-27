@@ -25,6 +25,7 @@ import com.example.studenttaskmanagement.R;
 import com.example.studenttaskmanagement.adapter.TaskAdapter;
 import com.example.studenttaskmanagement.database.dao.TaskDao;
 import com.example.studenttaskmanagement.model.Task;
+import com.example.studenttaskmanagement.notifications.NotificationStartup;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        NotificationStartup.initialize(getApplicationContext());
 
         bindViews();
         setupToolbarMenu();
